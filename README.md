@@ -10,9 +10,9 @@ FoundryVTT Module to help Game Master track status of preloading scene for conne
 
 If you would like to contribute to the localization, you can do so in one of these ways: 
 
-#### Translate through [Gitlocalize](https://gitlocalize.com/repo/10409). 
+#### 1. Translate through [Gitlocalize](https://gitlocalize.com/repo/10409). 
 
-#### Fork and Submit a Pull Request:
+#### 2. Fork and Submit a Pull Request:
 1. [Fork the repository](https://www.youtube.com/watch?v=f5grYMXbAV0) (copy main branch only).
 2. Then download or copy the [en.json](https://github.com/thejoester/bbmm/blob/master/lang/en.json) file.
 3. Rename it to the proper [language code](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) (for example es.json for Spanish language),
@@ -20,6 +20,6 @@ If you would like to contribute to the localization, you can do so in one of the
 5. When done upload the new language file to your fork in the **lang/** folder,
 6. Click the "Contribute" button and "Open Pull Request".
 
-#### Upload file as Issue:
+#### 3. Upload file as Issue:
 1. Download the [en.json](https://github.com/thejoester/bbmm/blob/master/lang/en.json) file,
 2. Rename it to the Open up an [Issue](https://github.com/thejoester/bbmm/issues) and attach the file. 
