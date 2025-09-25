@@ -2,7 +2,7 @@
 
 FoundryVTT Module to help Game Master track status of preloading scene for connected users.
 
-[![Preload Tracker demo](https://img.youtube.com/vi/OqG82XA9e8I/hqdefault.jpg)](https://www.youtube.com/watch?v=OqG82XA9e8I "Preload Tracker demo")
+[https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
 
 <br/><br/>
 <a href='https://ko-fi.com/X8X817QMZQ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
