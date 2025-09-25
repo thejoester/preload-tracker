@@ -16,19 +16,22 @@
     }
   ],
   "esmodules": [
-		"scripts/settings.js",
-		"scripts/tracker.js",
+    "scripts/settings.js",
+    "scripts/tracker.js",
     "scripts/localization.js"
-	],
+  ],
   "languages": [
-        {
-            "lang": "en",
-            "name": "English",
-            "path": "lang/en.json"
-        }
-    ],
-	"socket": true,
-  "url": "https://github.com/thejoester/preset-manager",
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "url": "https://github.com/thejoester/preload-tracker",
+  "readme": "https://github.com/thejoester/preload-tracker#readme",
+  "changelog": "https://github.com/thejoester/preload-tracker/releases",
+  "bugs": "https://github.com/thejoester/preload-tracker/issues",
   "flags": {
     "canUpload": true
   }
