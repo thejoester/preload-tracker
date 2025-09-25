@@ -1,0 +1,11 @@
+{
+  "preload-tracker": {
+    "title": "Preload Status",
+    "preloading": "Preloading:",
+    "preloadingScene": "Preloading scene...",
+    "finished": "Finished",
+    "loading": "Cargando",
+    "waiting": "En espera",
+    "close": "Cerrar"
+  }
+}
