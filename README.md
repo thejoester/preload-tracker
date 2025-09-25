@@ -2,6 +2,9 @@
 
 FoundryVTT Module to help Game Master track status of preloading scene for connected users.
 
+<img width="189" height="201" alt="image" src="https://github.com/user-attachments/assets/327de288-a3ac-4c70-8cb8-1ff77035d82c" />
+
+
 [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
 
 <br/><br/>
