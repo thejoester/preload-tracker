@@ -1,0 +1,81 @@
+name: Release Creation
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Extract Version From Tag
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+      # Use tagged manifest for prerelease; 'latest' channel for stable
+      - name: Set manifest URL for channel (stable vs prerelease)
+        id: set_manifest
+        run: |
+          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            echo "manifest_url=https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json" >> $GITHUB_OUTPUT
+          else
+            echo "manifest_url=https://github.com/${{ github.repository }}/releases/latest/download/module.json" >> $GITHUB_OUTPUT
+          fi
+
+      # Inject version/manifest/download into module.json for this release
+      - name: Modify Module Manifest With Release-Specific Values
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: "module.json"
+        env:
+          version: ${{ steps.get_version.outputs.version-without-v }}
+          manifest: ${{ steps.set_manifest.outputs.manifest_url }}
+          download: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/preload-tracker.zip
+
+      # ---- Package ---------------------------------------------------------
+      - name: Create Module Archive
+        run: |
+          mkdir -p dist
+          ZIPNAME="preload-tracker.zip"
+          # pick whichever license filename you use
+          LIC=""
+          if [ -f LICENSE.md ]; then LIC="LICENSE.md"; elif [ -f LICENSE ]; then LIC="LICENSE"; fi
+          # Build zip (adjust paths if you add/remove folders)
+          zip -r "dist/$ZIPNAME" \
+            module.json README.md $LIC \
+            scripts/ lang/ \
+            -x "**/.DS_Store" "**/Thumbs.db"
+
+      # ---- Attach artifacts to the GitHub Release -------------------------
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            module.json
+            dist/preload-tracker.zip
+
+      # ---- Optional: Keep a Changelog integration (commented until you add it) ----
+      - uses: release-flow/keep-a-changelog-action@v3
+        id: changelog
+        with:
+           command: query
+           version: ${{ steps.get_version.outputs.version-without-v }}
+
+      # ---- Publish to FoundryVTT Website (COMMENTED OUT as requested) ----
+      - name: Publish Module to FoundryVTT Website
+        if: ${{ ! github.event.release.prerelease }}
+        uses: cs96and/FoundryVTT-release-package@v1
+        with:
+           package-token: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+           manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json
