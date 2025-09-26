@@ -53,7 +53,7 @@ jobs:
           if [ -f LICENSE.md ]; then LIC="LICENSE.md"; elif [ -f LICENSE ]; then LIC="LICENSE"; fi
           # Build zip (adjust paths if you add/remove folders)
           zip -r "dist/$ZIPNAME" \
-            module.json README.md $LIC \
+            module.json README.md CHANGELOG.md $LIC \
             scripts/ lang/ \
             -x "**/.DS_Store" "**/Thumbs.db"
 
