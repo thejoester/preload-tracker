@@ -119,10 +119,11 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		list.style.flexDirection = "column";
 		list.style.gap = "6px";
 
-		for (const u of game.users.contents) {
-			// Only connected users
-			if (!u.active) continue;
+		// Build rows for ONLINE users only, and compute all-online-done gate
+		let allOnlineDone = true;
+		const onlineUsers = game.users.contents.filter(u => u.active);
 
+		for (const u of onlineUsers) {
 			const row = document.createElement("div");
 			row.style.display = "grid";
 			row.style.gridTemplateColumns = "1fr auto"; // name | status icon
@@ -134,6 +135,9 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 			row.style.background = "#0000000a";
 
 			const rec = this.users.get(u.id) || { started: false, done: false };
+
+			// Track all-online-done
+			if (!rec.done) allOnlineDone = false;
 
 			const name = document.createElement("div");
 			name.textContent = u.name + (u.isGM ? " (GM)" : "");
@@ -164,6 +168,46 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		actions.style.justifyContent = "flex-end";
 		actions.style.gap = "8px";
 		actions.style.marginTop = "10px";
+
+		// Activate button (GM only), disabled until everyone online is done
+		if (game.user.isGM && this.sceneId) {
+			const activateBtn = document.createElement("button");
+			activateBtn.classList.add("button");
+			activateBtn.textContent = LT.activate();
+
+			const isActive = game.scenes?.active?.id === this.sceneId;
+
+			// Disable conditions:
+			// - scene is already active OR
+			// - not all online users are done
+			activateBtn.disabled = isActive || !allOnlineDone;
+
+			// Helpful tooltip
+			if (isActive) {
+				activateBtn.title = LT.alreadyActive();
+			} else if (!allOnlineDone) {
+				activateBtn.title = LT.activateBtnTitle();
+			}
+
+			activateBtn.addEventListener("click", async () => {
+				try {
+					const sc = game.scenes.get(this.sceneId);
+					if (!sc) {
+						DL(2, "activate(): scene not found", { id: this.sceneId, name: this.sceneName });
+						return;
+					}
+					DL(`activate(): activating scene "${sc.name}" (${sc.id})`);
+					await sc.activate();
+					// Optionally close after activation:
+					// await this.close();
+				} catch (e) {
+					DL(3, "activate(): failed", e);
+					ui.notifications?.error(LT.activateError());
+				}
+			});
+
+			actions.appendChild(activateBtn);
+		}
 
 		const closeBtn = document.createElement("button");
 		closeBtn.classList.add("button");
@@ -217,24 +261,33 @@ function registerSocketHandlers() {
 	DL(`registerSocketHandlers(): listening on ${channel}`);
 }
 
-function installPreloadWrappers() {
-	const probes = [
-		["Scene.prototype.preload", Scene?.prototype?.preload],
-		["Scene.preload (static?)", Scene?.preload],
-		["game.scenes.preload", game?.scenes?.preload],
-		["Scenes proto preload", Object.getPrototypeOf(game.scenes)?.preload]
-	];
-	for (const [label, fn] of probes) DL(`installPreloadWrappers(): probe ${label} => ${typeof fn}`);
+function installPreloadWrappers_libWrapper() {
+	if (!game.modules.get("lib-wrapper")?.active) {
+		DL(3, "installPreloadWrappers_libWrapper(): libWrapper is REQUIRED but not active.");
+		return false;
+	}
 
-	// Preferred wrapper: instance method
-	if (typeof Scene?.prototype?.preload === "function" && !Scene.prototype.preload.__ptWrapped) {
-		const original = Scene.prototype.preload;
-		Scene.prototype.preload = async function(...args) {
+	const register = (...args) => {
+		try { libWrapper.register(MOD_ID, ...args); }
+		catch (e) { DL(3, "libWrapper.register(): failed", e); }
+	};
+
+	let registered = 0;
+
+	// Probe what exists so we don't register missing targets
+	const hasSceneProto = typeof Scene?.prototype?.preload === "function";
+	const hasCollection = typeof game?.scenes?.preload === "function";
+
+	DL(`libWrapper probes: Scene.prototype.preload => ${hasSceneProto ? "function" : typeof Scene?.prototype?.preload}`);
+	DL(`libWrapper probes: game.scenes.preload => ${hasCollection ? "function" : typeof game?.scenes?.preload}`);
+
+	// Wrap Scene.prototype.preload (only if it exists)
+	if (hasSceneProto) {
+		register("Scene.prototype.preload", async function (wrapped, ...args) {
 			try {
-				DL(`wrap[Scene#preload]: started for "${this.name}" (${this.id})`);
+				DL(`lw[Scene#preload]: started for "${this.name}" (${this.id})`);
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "started" });
 
-				// GM: open + hard reset statuses for a new run
 				if (game.user.isGM) {
 					const app = PreloadTrackerApp.getInstance();
 					app.ensureUsersFromGame();
@@ -244,9 +297,9 @@ function installPreloadWrappers() {
 					await app.render(false);
 				}
 
-				const result = await original.apply(this, args);
+				const result = await wrapped(...args);
 
-				DL(`wrap[Scene#preload]: done for "${this.name}" (${this.id})`);
+				DL(`lw[Scene#preload]: done for "${this.name}" (${this.id})`);
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "done" });
 
 				if (game.user.isGM) {
@@ -256,28 +309,24 @@ function installPreloadWrappers() {
 				}
 				return result;
 			} catch (e) {
-				DL(3, "wrap[Scene#preload]: error", e);
+				DL(3, "lw[Scene#preload]: error", e);
 				throw e;
 			}
-		};
-		Scene.prototype.preload.__ptWrapped = true;
-		DL("installPreloadWrappers(): wrapped Scene#preload");
-		return;
+		}, "WRAPPER");
+		registered++;
 	}
 
-	// Fallback: collection-level method
-	if (typeof game?.scenes?.preload === "function" && !game.scenes.preload.__ptWrapped) {
-		const original = game.scenes.preload;
-		game.scenes.preload = async function(id, ...args) {
+	// Wrap collection call: game.scenes.preload (this is the path we saw in your logs)
+	if (hasCollection) {
+		register("game.scenes.preload", async function (wrapped, id, ...args) {
 			try {
 				const sc = this.get(id);
-				const name = sc?.name ?? String(id);
 				const sceneId = sc?.id ?? id;
+				const name = sc?.name ?? String(id);
 
-				DL(`wrap[game.scenes.preload]: started for "${name}" (${sceneId})`);
+				DL(`lw[game.scenes.preload]: started for "${name}" (${sceneId})`);
 				emitStatus({ type: "preload-status", sceneId, userId: game.user.id, status: "started" });
 
-				// GM: open + hard reset statuses for a new run
 				if (game.user.isGM) {
 					const app = PreloadTrackerApp.getInstance();
 					app.ensureUsersFromGame();
@@ -287,9 +336,9 @@ function installPreloadWrappers() {
 					await app.render(false);
 				}
 
-				const result = await original.apply(this, [id, ...args]);
+				const result = await wrapped(id, ...args);
 
-				DL(`wrap[game.scenes.preload]: done for "${name}" (${sceneId})`);
+				DL(`lw[game.scenes.preload]: done for "${name}" (${sceneId})`);
 				emitStatus({ type: "preload-status", sceneId, userId: game.user.id, status: "done" });
 
 				if (game.user.isGM) {
@@ -299,25 +348,43 @@ function installPreloadWrappers() {
 				}
 				return result;
 			} catch (e) {
-				DL(3, "wrap[game.scenes.preload]: error", e);
+				DL(3, "lw[game.scenes.preload]: error", e);
 				throw e;
 			}
-		};
-		game.scenes.preload.__ptWrapped = true;
-		DL("installPreloadWrappers(): wrapped game.scenes.preload");
-		return;
+		}, "WRAPPER");
+		registered++;
 	}
 
-	DL(2, "installPreloadWrappers(): no known preload entrypoint found to wrap");
+	if (!registered) {
+		DL(3, "installPreloadWrappers_libWrapper(): no valid targets found to wrap. Aborting.");
+		return false;
+	}
+
+	DL(`installPreloadWrappers_libWrapper(): registered ${registered} wrapper(s) via libWrapper`);
+	return true;
 }
+
 
 /* =====================================================================================
 	HOOKS REGISTRATION
 ===================================================================================== */
 Hooks.once("ready", () => {
 	try {
+
+		// Ensure Libwrapper is available
+		if (!game.modules.get("lib-wrapper")?.active) {
+			DL(3, "ready(): libWrapper is REQUIRED. Enable the 'libWrapper' module and reload.");
+			ui.notifications?.error(LT.libwrapperReq());
+			return; // hard stop; no wrappers installed
+		}
+
 		registerSocketHandlers();
-		installPreloadWrappers();
+		const ok = installPreloadWrappers_libWrapper();
+		if (!ok) {
+			ui.notifications?.warn("Preload Tracker: no preload entrypoint found to wrap on this build.");
+		} else {
+			DL("ready(): libWrapper wrappers installed");
+		}
 		DL("ready(): socket + wrappers installed");
 	} catch (e) {
 		DL(3, "ready(): failed to initialize", e);

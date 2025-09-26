@@ -1,45 +1,52 @@
 {
-  "id": "preload-tracker",
-  "title": "Preload Tracker",
-  "version": "1.0.0",
-  "compatibility": {
-    "minimum": "13",
-    "verified": "13"
-  },
-  "description": "<p>When preloading a scene, show a window with status of all users and mark as they finish preloading.</p>",
-  "authors": [
-    {
-      "name": "TheJoester",
-      "url": "https://github.com/thejoester/",
-      "discord": "thejoester",
-      "flags": {}
-    }
-  ],
-  "esmodules": [
-    "scripts/settings.js",
-    "scripts/tracker.js",
-    "scripts/localization.js"
-  ],
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
+    "id": "preload-tracker",
+    "title": "Preload Tracker",
+    "version": "1.0.1",
+    "compatibility": {
+        "minimum": "13",
+        "verified": "13"
     },
-    {
-      "lang": "es",
-      "name": "Spanish",
-      "path": "lang/es.json"
+    "description": "<p>When preloading a scene, show a window with status of all users and mark as they finish preloading.</p>",
+    "authors": [
+        {
+            "name": "TheJoester",
+            "url": "https://github.com/thejoester/",
+            "discord": "thejoester",
+            "flags": {}
+        }
+    ],
+    "esmodules": [
+        "scripts/settings.js",
+        "scripts/tracker.js",
+        "scripts/localization.js"
+    ],
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json"
+        },
+        {
+            "lang": "es",
+            "name": "Spanish",
+            "path": "lang/es.json"
+        }
+    ],
+    "socket": true,
+    "relationships": {
+		"requires": [{
+			"id": "lib-wrapper",
+			"type": "module",
+			"manifest": "https://github.com/ruipin/fvtt-lib-wrapper/releases/latest/download/module.json"
+		}]
+	},
+    "url": "https://github.com/thejoester/preload-tracker",
+    "manifest": "https://github.com/thejoester/preload-tracker/releases/latest/download/module.json",
+    "download": "https://github.com/thejoester/preload-tracker/releases/download/1.0.1/preload-tracker.zip",
+    "readme": "https://github.com/thejoester/preload-tracker#readme",
+    "changelog": "https://github.com/thejoester/preload-tracker/releases",
+    "bugs": "https://github.com/thejoester/preload-tracker/issues",
+    "flags": {
+        "canUpload": true
     }
-  ],
-  "socket": true,
-  "url": "https://github.com/thejoester/preload-tracker",
-  "manifest": "https://github.com/thejoester/preload-tracker/releases/latest/download/module.json",
-  "download": "https://github.com/thejoester/preload-tracker/releases/latest/download/preload-tracker.zip",
-  "readme": "https://github.com/thejoester/preload-tracker#readme",
-  "changelog": "https://github.com/thejoester/preload-tracker/releases",
-  "bugs": "https://github.com/thejoester/preload-tracker/issues",
-  "flags": {
-    "canUpload": true
-  }
 }
