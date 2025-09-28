@@ -197,9 +197,11 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 						return;
 					}
 					DL(`activate(): activating scene "${sc.name}" (${sc.id})`);
+					// close window
+					await this.close();
+					// activate
 					await sc.activate();
-					// Optionally close after activation:
-					// await this.close();
+					
 				} catch (e) {
 					DL(3, "activate(): failed", e);
 					ui.notifications?.error(LT.activateError());
