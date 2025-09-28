@@ -318,7 +318,7 @@ function installPreloadWrappers_libWrapper() {
 		registered++;
 	}
 
-	// Wrap collection call: game.scenes.preload (this is the path we saw in your logs)
+	// Wrap collection call: game.scenes.preload
 	if (hasCollection) {
 		register("game.scenes.preload", async function (wrapped, id, ...args) {
 			try {
