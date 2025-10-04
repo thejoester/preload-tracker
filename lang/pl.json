@@ -1,0 +1,16 @@
+{
+    "preload-tracker":{
+        "title": "Stan wstępnego załadowania",
+        "preloading": "Wstępne ładowanie:",
+        "preloadingScene": "Ładowanie sceny...",
+        "finished": "Zakończono",
+        "loading": "Ładowanie",
+        "waiting": "Oczekiwanie",
+        "close": "Zamknij",
+        "activate": "Aktywacja",
+		"alreadyActive": "Aktualnie aktywny",
+        "activateError": "Aktywacja nie powiodła się; zobacz konsolę.",
+        "activateBtnTitle": "Oczekiwanie na zakończenie wstępnego ładowania przez wszystkich podłączonych użytkowników",
+        "libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę."
+    }
+}
