@@ -56,21 +56,26 @@ jobs:
             module.json README.md CHANGELOG.md $LIC \
             scripts/ lang/ \
             -x "**/.DS_Store" "**/Thumbs.db"
-
-      # ---- Attach artifacts to the GitHub Release -------------------------
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            module.json
-            dist/preload-tracker.zip
-
-      # ---- Optional: Keep a Changelog integration (commented until you add it) ----
+      
+      # ---- Keep a Changelog integration ----------------------------------
       - uses: release-flow/keep-a-changelog-action@v3
         id: changelog
         with:
            command: query
            version: ${{ steps.get_version.outputs.version-without-v }}
+      
+      # ---- Create or Update GitHub Release -------------------------------
+      - name: Update Release With Files
+        id: create_version_release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          draft: ${{ github.event.release.draft }}
+          prerelease: ${{ github.event.release.prerelease }}
+          name: ${{ steps.get_version.outputs.version-without-v }}
+          body: ${{ steps.changelog.outputs.release-notes }}
+          artifacts: "module.json, dist/preload-tracker.zip"
 
       # ---- Publish to FoundryVTT Website (COMMENTED OUT as requested) ----
       - name: Publish Module to FoundryVTT Website
