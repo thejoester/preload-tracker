@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2025-10-06
+### Added
+- Added Polish (pl) localization. Credit [Lioheart](https://github.com/Lioheart)!
+
 ## [1.2.1] - 2025-09-28
 ### Changed
 - Clicking Activate will close the window and activate the scene. 
