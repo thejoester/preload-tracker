@@ -30,6 +30,11 @@
             "lang": "es",
             "name": "Spanish",
             "path": "lang/es.json"
+        },
+        {
+            "lang": "pl",
+            "name": "Polish",
+            "path": "lang/pl.json"
         }
     ],
     "socket": true,
