@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2025-10-06
+### Changed
+- Updated Github release to avoid manifest update messages in foundry.
+
 ## [1.2.2] - 2025-10-06
 ### Added
 - Added Polish (pl) localization. Credit [Lioheart](https://github.com/Lioheart)!
