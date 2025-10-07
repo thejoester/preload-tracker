@@ -23,18 +23,23 @@ jobs:
         id: get_version
         uses: battila7/get-version-action@v2
 
-      # Use tagged manifest for prerelease; 'latest' channel for stable
+      # Decide manifest channel:
+      # - pre-release checkbox OR tag contains '-'  => tagged manifest
+      # - otherwise => latest manifest
       - name: Set manifest URL for channel (stable vs prerelease)
         id: set_manifest
         run: |
-          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
-            echo "manifest_url=https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json" >> $GITHUB_OUTPUT
+          TAG="${{ github.event.release.tag_name }}"
+          IS_PRE="${{ github.event.release.prerelease }}"
+          if [[ "$IS_PRE" == "true" || "$TAG" == *"-"* ]]; then
+            echo "manifest_url=https://github.com/${{ github.repository }}/releases/download/${TAG}/module.json" >> $GITHUB_OUTPUT
           else
             echo "manifest_url=https://github.com/${{ github.repository }}/releases/latest/download/module.json" >> $GITHUB_OUTPUT
           fi
 
       # Inject version/manifest/download into module.json for this release
       - name: Modify Module Manifest With Release-Specific Values
+        id: sub_manifest_link_version
         uses: microsoft/variable-substitution@v1
         with:
           files: "module.json"
@@ -43,28 +48,26 @@ jobs:
           manifest: ${{ steps.set_manifest.outputs.manifest_url }}
           download: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/preload-tracker.zip
 
-      # ---- Package ---------------------------------------------------------
+      # --- Package ----------------------------------------------------------
       - name: Create Module Archive
         run: |
           mkdir -p dist
           ZIPNAME="preload-tracker.zip"
-          # pick whichever license filename you use
-          LIC=""
-          if [ -f LICENSE.md ]; then LIC="LICENSE.md"; elif [ -f LICENSE ]; then LIC="LICENSE"; fi
-          # Build zip (adjust paths if you add/remove folders)
+          if [ -f LICENSE.md ]; then LIC="LICENSE.md"; else LIC="LICENSE"; fi
+          # Include only the files/folders this repo actually has
           zip -r "dist/$ZIPNAME" \
-            module.json README.md CHANGELOG.md $LIC \
+            module.json README.md "$LIC" CHANGELOG.md \
             scripts/ lang/ \
             -x "**/.DS_Store" "**/Thumbs.db"
-      
-      # ---- Keep a Changelog integration ----------------------------------
+
+      # ---- Keep a Changelog integration -----------------------------------
       - uses: release-flow/keep-a-changelog-action@v3
         id: changelog
         with:
-           command: query
-           version: ${{ steps.get_version.outputs.version-without-v }}
-      
-      # ---- Create or Update GitHub Release -------------------------------
+          command: query
+          version: ${{ steps.get_version.outputs.version-without-v }}
+
+      # ---- Create or Update GitHub Release --------------------------------
       - name: Update Release With Files
         id: create_version_release
         uses: ncipollo/release-action@v1
@@ -77,10 +80,12 @@ jobs:
           body: ${{ steps.changelog.outputs.release-notes }}
           artifacts: "module.json, dist/preload-tracker.zip"
 
-      # ---- Publish to FoundryVTT Website (COMMENTED OUT as requested) ----
+      # ---- Publish to FoundryVTT Website ----------------------------------
+      # Foundry expects the *tagged* manifest for this specific release
       - name: Publish Module to FoundryVTT Website
+        id: publish-to-foundry-website
         if: ${{ ! github.event.release.prerelease }}
         uses: cs96and/FoundryVTT-release-package@v1
         with:
-           package-token: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
-           manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json
+          package-token: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+          manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json
