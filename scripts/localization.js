@@ -4,10 +4,10 @@
     	- Works with any preload-tracker.* key path found in en.json
 ======================================================================= */
 
-import { DL, MOD_ID } from "./tracker.js";
+import { DL } from "./tracker.js";
 
 // Start all lookups from the root of MOD_ID
-export const LT = makeNode(MOD_ID);
+export const LT = makeNode("preload-tracker");
 
 /* 	L: localize a key (no placeholders) */
 export function L(key) {
