@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.5] - 2025-10-10
+### Fixed
+- Fixed bug causing `Cannot access 'MOD_ID' before initialization` error preventing loading of module.
+
 ## [1.2.4] - 2025-10-10
 ### Changed
 - Cleaned up and consolidated code. 
