@@ -1,16 +1,18 @@
-/*  Dynamic Localization
-    - Works with any preload-tracker.* key path found in en.json
-*/
+/* =======================================================================
+		Dynamic Localization helper 
+		- A simple localization helper
+    	- Works with any preload-tracker.* key path found in en.json
+======================================================================= */
 
-import { DL } from "./settings.js";
+import { DL, MOD_ID } from "./tracker.js";
 
-/*
-	L: localize a key (no placeholders)
-*/
+// Start all lookups from the root of MOD_ID
+export const LT = makeNode(MOD_ID);
+
+/* 	L: localize a key (no placeholders) */
 export function L(key) {
-	// Debug
-	//DL("L(): start");
 	try {
+		if (typeof key !== "string") { DL(2, "L(): key must be string", { key }); return String(key); }
 		const s = game.i18n.localize(key);
 		if (s === key) DL(2, "L(): missing key", { key });
 		return s;
@@ -20,12 +22,8 @@ export function L(key) {
 	}
 }
 
-/*
-	LF: format a key with {placeholders}
-*/
+/* 	LF: format a key with {placeholders} */
 export function LF(key, data = {}) {
-	// Debug
-	//DL("LF(): start");
 	try {
 		const out = game.i18n.format(key, data);
 		if (out === key) DL(2, "LF(): missing key", { key, data });
@@ -36,8 +34,7 @@ export function LF(key, data = {}) {
 	}
 }
 
-/*
-	Dynamic LT:
+/* 	Dynamic LT:
 	- Any property chain becomes a key path under "preload-tracker"
 	- Call with no args => L()
 	- Call with an object => LF()
@@ -45,11 +42,9 @@ export function LF(key, data = {}) {
 function makeNode(key) {
 	// Callable function: LT.something(...) -> localize/format
 	const fn = (data) => {
-        // Debug
-        //DL("LT(): lookup", { key, hasData: !!data });
 		return data && typeof data === "object" ? LF(key, data) : L(key);
 	};
-
+	// Proxy to catch property access and build nested keys
 	return new Proxy(fn, {
 		get(_target, prop) {
 			// Avoid prototype noise
@@ -62,6 +57,3 @@ function makeNode(key) {
 		}
 	});
 }
-
-// Start all lookups from the root "preload-tracker"
-export const LT = makeNode("preload-tracker");

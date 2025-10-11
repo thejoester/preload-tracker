@@ -1,13 +1,44 @@
-import { MOD_ID, DL } from "./settings.js";
+export const MOD_ID = "preload-tracker";
 import { LT } from "./localization.js";
 
+/*	=======================================================================
+    Simple debuig logger to style console messages
+    DL("msg") => info
+    DL(2, "msg") => warn
+    DL(3, "msg") => error
+======================================================================= */
+export function DL(intLogType, stringLogMsg, objObject = null) {
+	// Allow DL("string") shorthand
+	if (typeof intLogType === "string") {
+		objObject = stringLogMsg;
+		stringLogMsg = intLogType;
+		intLogType = 1;
+	}
+	const now = new Date();
+	const ts = now.toTimeString().split(" ")[0];
+
+	const level = intLogType ?? 1;
+	const pref = `Preset Tracker [${ts}] |`;
+
+	if (objObject) {
+		if (level === 3) console.error(`${pref} ERROR: ${stringLogMsg}`, objObject);
+		else if (level === 2) console.warn(`${pref} WARNING: ${stringLogMsg}`, objObject);
+		else console.log(`${pref} ${stringLogMsg}`, objObject);
+	} else {
+		if (level === 3) console.error(`${pref} ERROR: ${stringLogMsg}`);
+		else if (level === 2) console.warn(`${pref} WARNING: ${stringLogMsg}`);
+		else console.log(`${pref} ${stringLogMsg}`);
+	}
+}
+
+
 /* =====================================================================================
-	TRACKER UI (ApplicationV2)
+	PRELOAD TRACKER UI 
 ===================================================================================== */
 class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	static _instance = null;
 	static _stylesInjected = false;
-
+	
 	static getInstance() {
 		if (!this._instance) this._instance = new PreloadTrackerApp();
 		return this._instance;
@@ -30,6 +61,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		this.runToken = 0;		// increments each time we start a new preload run
 	}
 
+	// Inject CSS styles once
 	_ensureStyles() {
         if (PreloadTrackerApp._stylesInjected) return;
         const css = document.createElement("style");
@@ -45,6 +77,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
         PreloadTrackerApp._stylesInjected = true;
 	}
 
+	// Set current scene info
 	setScene(scene) {
 		this.sceneId = scene?.id ?? null;
 		this.sceneName = scene?.name ?? "";
@@ -61,6 +94,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		}
 	}
 
+	// Ensure this.users has all current users from game.users
 	ensureUsersFromGame() {
 		for (const u of game.users.contents) {
 			if (!this.users.has(u.id)) {
@@ -74,17 +108,17 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		}
 	}
 
+	// Mark user as started
 	markStarted(userId) {
 		const rec = this.users.get(userId);
 		if (rec) { rec.started = true; this.users.set(userId, rec); }
 	}
 
+	// Mark user as done
 	markDone(userId) {
 		const rec = this.users.get(userId);
 		if (rec) { rec.started = true; rec.done = true; this.users.set(userId, rec); }
 	}
-
-	/* ===== ApplicationV2 required methods ===== */
 
 	async _renderHTML(options) {
 		this._ensureStyles();
@@ -225,6 +259,8 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 /* =====================================================================================
 	SOCKET HANDLERS
 ===================================================================================== */
+
+// Emit a preload status message to GMs
 function emitStatus(payload) {
 	try {
 		const channel = `module.${MOD_ID}`;
@@ -235,6 +271,7 @@ function emitStatus(payload) {
 	}
 }
 
+// Register socket listener for preload status messages
 function registerSocketHandlers() {
 	const channel = `module.${MOD_ID}`;
 	game.socket.on(channel, async (data) => {
@@ -263,23 +300,23 @@ function registerSocketHandlers() {
 	DL(`registerSocketHandlers(): listening on ${channel}`);
 }
 
+// Install libWrapper wrappers around preload entrypoints
 function installPreloadWrappers_libWrapper() {
 	if (!game.modules.get("lib-wrapper")?.active) {
 		DL(3, "installPreloadWrappers_libWrapper(): libWrapper is REQUIRED but not active.");
 		return false;
 	}
-
 	const register = (...args) => {
 		try { libWrapper.register(MOD_ID, ...args); }
 		catch (e) { DL(3, "libWrapper.register(): failed", e); }
 	};
-
 	let registered = 0;
 
 	// Probe what exists so we don't register missing targets
 	const hasSceneProto = typeof Scene?.prototype?.preload === "function";
 	const hasCollection = typeof game?.scenes?.preload === "function";
 
+	// Debug probes
 	DL(`libWrapper probes: Scene.prototype.preload => ${hasSceneProto ? "function" : typeof Scene?.prototype?.preload}`);
 	DL(`libWrapper probes: game.scenes.preload => ${hasCollection ? "function" : typeof game?.scenes?.preload}`);
 
@@ -290,7 +327,7 @@ function installPreloadWrappers_libWrapper() {
 				DL(`lw[Scene#preload]: started for "${this.name}" (${this.id})`);
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "started" });
 
-				if (game.user.isGM) {
+				if (game.user.isGM) { // only GMs track and display
 					const app = PreloadTrackerApp.getInstance();
 					app.ensureUsersFromGame();
 					app.startRun(this);
@@ -299,7 +336,7 @@ function installPreloadWrappers_libWrapper() {
 					await app.render(false);
 				}
 
-				const result = await wrapped(...args);
+				const result = await wrapped(...args); 
 
 				DL(`lw[Scene#preload]: done for "${this.name}" (${this.id})`);
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "done" });
@@ -391,4 +428,8 @@ Hooks.once("ready", () => {
 	} catch (e) {
 		DL(3, "ready(): failed to initialize", e);
 	}
+});
+
+Hooks.once("init", () => {
+	DL("init(): preload-tracker ready");
 });

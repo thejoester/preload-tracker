@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2025-10-10
+### Changed
+- Cleaned up and consolidated code. 
+## Added
+- Added French localization. Credit [Rectulo](https://gitlocalize.com/users/rectulo)!
+
 ## [1.2.3] - 2025-10-06
 ### Changed
 - Updated Github release to avoid manifest update messages in foundry.

@@ -15,6 +15,7 @@ I would like to extend a thanks to the following people for helping contribute t
 
 ### Translations
 - Polish (pl): [Lioheart](https://github.com/Lioheart)
+- French (fr): [Rectulo](https://gitlocalize.com/users/rectulo)
 
 ## Contribute
 

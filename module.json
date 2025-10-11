@@ -16,7 +16,6 @@
         }
     ],
     "esmodules": [
-        "scripts/settings.js",
         "scripts/tracker.js",
         "scripts/localization.js"
     ],
@@ -35,6 +34,11 @@
             "lang": "pl",
             "name": "Polish",
             "path": "lang/pl.json"
+        },
+        {
+            "lang": "fr",
+            "name": "French",
+            "path": "lang/fr.json"
         }
     ],
     "socket": true,
