@@ -6,6 +6,11 @@
     "finished": "Finished",
     "loading": "Cargando",
     "waiting": "En espera",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "activate": "Activar",
+    "alreadyActive": "Ya activo",
+    "activateError": "La activación falló; consulte la consola.",
+    "activateBtnTitle": "Esperando a que todos los usuarios conectados terminen la precarga",
+    "libwrapperReq": "Rastreador de precarga: se requiere libWrapper. Habilítelo y vuelva a cargar."
   }
 }
