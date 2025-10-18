@@ -11,6 +11,14 @@
     "alreadyActive": "Ya activo",
     "activateError": "La activación falló; consulte la consola.",
     "activateBtnTitle": "Esperando a que todos los usuarios conectados terminen la precarga",
-    "libwrapperReq": "Rastreador de precarga: se requiere libWrapper. Habilítelo y vuelva a cargar."
+    "libwrapperReq": "Rastreador de precarga: se requiere libWrapper. Habilítelo y vuelva a cargar.",
+    "settings": {
+      "debugLevelName": "Habilitar la depuración",
+      "debugLevelHint": "Establezca el nivel de depuración para Preload Tracker.",
+      "debugLevelNone": "Ninguno",
+      "debugLevelError": "Errores",
+      "debugLevelWarn": "Advertencias",
+      "debugLevelAll": "Todo"
+    }
   }
 }
