@@ -1,6 +1,9 @@
 export const MOD_ID = "preload-tracker";
 import { LT } from "./localization.js";
 
+// Track whether we are currently within a preload run on this client
+let PT_CURRENT_RUN = { active: false, sceneId: null };
+let PT_ORIG_CONSOLE_LOG = null; // to store original console.log
 /*	=======================================================================
     Simple debuig logger to style console messages
     DL("msg") => info
@@ -8,26 +11,75 @@ import { LT } from "./localization.js";
     DL(3, "msg") => error
 ======================================================================= */
 export function DL(intLogType, stringLogMsg, objObject = null) {
-	// Allow DL("string") shorthand
-	if (typeof intLogType === "string") {
-		objObject = stringLogMsg;
-		stringLogMsg = intLogType;
-		intLogType = 1;
-	}
+	// Get Timestamps
 	const now = new Date();
-	const ts = now.toTimeString().split(" ")[0];
+	const timestamp = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
+	
+	// Handle the case where the first argument is a string
+	if (typeof intLogType === "string") {
+		objObject = stringLogMsg; // Shift arguments
+		stringLogMsg = intLogType;
+		intLogType = 1; // Default log type to 'all'
+	}
+	const debugLevel = game.settings.get(MOD_ID, "debugLevel");
 
-	const level = intLogType ?? 1;
-	const pref = `Preset Tracker [${ts}] |`;
+	// Map debugLevel setting to numeric value for comparison
+	const levelMap = {
+		"none": 4,
+		"error": 3,
+		"warn": 2,
+		"all": 1
+	};
 
+	const currentLevel = levelMap[debugLevel] || 4; // Default to 'none' if debugLevel is undefined
+
+	// Check if the log type should be logged based on the current debug level
+	if (intLogType < currentLevel) return;
+
+	// Capture stack trace to get file and line number
+	const stack = new Error().stack.split("\n");
+	let fileInfo = "Unknown Source";
+	for (let i = 2; i < stack.length; i++) {
+		const line = stack[i].trim();
+		const fileInfoMatch = line.match(/(\/[^)]+):(\d+):(\d+)/); // Match file path and line number
+		if (fileInfoMatch) {
+			const [, filePath, lineNumber] = fileInfoMatch;
+			const fileName = filePath.split("/").pop(); // Extract just the file name
+			fileInfo = `${fileName}:${lineNumber}`;
+		}
+	}
+
+	// Prepend the file and line info to the log message
+	const formattedLogMsg = `[${fileInfo}] ${stringLogMsg}`;
+	
 	if (objObject) {
-		if (level === 3) console.error(`${pref} ERROR: ${stringLogMsg}`, objObject);
-		else if (level === 2) console.warn(`${pref} WARNING: ${stringLogMsg}`, objObject);
-		else console.log(`${pref} ${stringLogMsg}`, objObject);
+		switch (intLogType) {
+			case 1: // Info/Log (all)
+				console.log(`%cPreload Tracker [${timestamp}] | ${formattedLogMsg}`, "color: #7e56db; font-weight: bold;", objObject);
+				break;
+			case 2: // Warning
+				console.log(`%cPreload Tracker [${timestamp}] | WARNING: ${formattedLogMsg}`, "color: orange; font-weight: bold;", objObject);
+				break;
+			case 3: // Critical/Error
+				console.log(`%cPreload Tracker [${timestamp}] | ERROR: ${formattedLogMsg}`, "color: red; font-weight: bold;", objObject);
+				break;
+			default:
+				console.log(`%cPreload Tracker [${timestamp}] | ${formattedLogMsg}`, "color: aqua; font-weight: bold;", objObject);
+		}
 	} else {
-		if (level === 3) console.error(`${pref} ERROR: ${stringLogMsg}`);
-		else if (level === 2) console.warn(`${pref} WARNING: ${stringLogMsg}`);
-		else console.log(`${pref} ${stringLogMsg}`);
+		switch (intLogType) {
+			case 1: // Info/Log (all)
+				console.log(`%cPreload Tracker [${timestamp}] | ${formattedLogMsg}`, "color: #7e56db; font-weight: bold;");
+				break;
+			case 2: // Warning
+				console.log(`%cPreload Tracker [${timestamp}] | WARNING: ${formattedLogMsg}`, "color: orange; font-weight: bold;");
+				break;
+			case 3: // Critical/Error
+				console.log(`%cPreload Tracker [${timestamp}] | ERROR: ${formattedLogMsg}`, "color: red; font-weight: bold;");
+				break;
+			default:
+				console.log(`%cPreload Tracker [${timestamp}] | ${formattedLogMsg}`, "color: #7e56db; font-weight: bold;");
+		}
 	}
 }
 
@@ -90,6 +142,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		for (const [uid, rec] of this.users) {
 			rec.started = false;
 			rec.done = false;
+			rec.pct = 0;
 			this.users.set(uid, rec);
 		}
 	}
@@ -98,7 +151,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	ensureUsersFromGame() {
 		for (const u of game.users.contents) {
 			if (!this.users.has(u.id)) {
-				this.users.set(u.id, { name: u.name, isGM: u.isGM, started: false, done: false });
+				this.users.set(u.id, { name: u.name, isGM: u.isGM, started: false, done: false, pct: 0 });
 			} else {
 				const rec = this.users.get(u.id);
 				rec.name = u.name;
@@ -117,9 +170,21 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	// Mark user as done
 	markDone(userId) {
 		const rec = this.users.get(userId);
-		if (rec) { rec.started = true; rec.done = true; this.users.set(userId, rec); }
+		if (rec) { rec.started = true; rec.done = true; rec.pct = 100; this.users.set(userId, rec); }
 	}
 
+	// Set user progress percentage
+	setProgress(userId, pct) {
+		const rec = this.users.get(userId);
+		if (!rec) return;
+		const n = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+		if (n >= (rec.pct ?? 0) || n === 0 || n === 100) {
+			rec.pct = n;
+			this.users.set(userId, rec);
+		}
+	}
+
+	// Render overrides
 	async _renderHTML(options) {
 		this._ensureStyles();
 		const root = document.createElement("div");
@@ -186,7 +251,11 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 			if (rec.done) {
 				status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i>`;
 			} else if (rec.started) {
-				status.innerHTML = `<i class="fas fa-spinner pt-spin pt-orange" title="${LT.loading()}"></i>`;
+				const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
+				status.innerHTML = `
+					<i class="fas fa-spinner pt-spin pt-orange" title="${LT.loading()}"></i>
+					<span class="pt-mono" style="margin-left: 6px;">${pct}%</span>
+				`;
 			} else {
 				status.innerHTML = `<span class="pt-mono" title="${LT.waiting()}">—</span>`;
 			}
@@ -260,6 +329,48 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	SOCKET HANDLERS
 ===================================================================================== */
 
+// Attempt to extract a percentage from console.log args
+function _ptExtractPctFromLogArgs(args) {
+	try {
+		// Join only stringable parts so we don't hammer performance
+		const s = Array.from(args).map(a => (typeof a === "string" ? a : "")).join(" ");
+		const m = s.match(/\((\d+(?:\.\d+)?)%\)/);
+		if (m) return Number(m[1]);
+	} catch {}
+	return undefined;
+}
+
+// Install a tap on console.log to catch progress messages
+function _ptInstallConsoleProgressTap() {
+	if (PT_ORIG_CONSOLE_LOG) return; // already installed
+	PT_ORIG_CONSOLE_LOG = console.log;
+	console.log = function patchedConsoleLog(...args) {
+		try {
+			if (PT_CURRENT_RUN.active && !game.user.isGM) {
+				const pct = _ptExtractPctFromLogArgs(args);
+				if (typeof pct === "number") {
+					const n = Math.max(0, Math.min(100, Math.round(pct)));
+					DL(`console-progress: ${n}% scene=${PT_CURRENT_RUN.sceneId}`);
+					emitStatus({ type: "preload-status", sceneId: PT_CURRENT_RUN.sceneId, userId: game.user.id, status: "progress", pct: n });
+				}
+			}
+		} catch (e) {
+			DL(2, "console progress tap error", e);
+		}
+		// Always pass through
+		return PT_ORIG_CONSOLE_LOG.apply(this, args);
+	};
+	DL("console progress tap installed");
+}
+
+// Remove the tap when done
+function _ptRemoveConsoleProgressTap() {
+	if (!PT_ORIG_CONSOLE_LOG) return;
+	console.log = PT_ORIG_CONSOLE_LOG;
+	PT_ORIG_CONSOLE_LOG = null;
+	DL("console progress tap removed");
+}
+
 // Emit a preload status message to GMs
 function emitStatus(payload) {
 	try {
@@ -270,6 +381,7 @@ function emitStatus(payload) {
 		DL(3, "emitStatus(): socket emit failed", e);
 	}
 }
+
 
 // Register socket listener for preload status messages
 function registerSocketHandlers() {
@@ -290,6 +402,9 @@ function registerSocketHandlers() {
 
 			if (data.status === "started") app.markStarted(data.userId);
 			if (data.status === "done") app.markDone(data.userId);
+			if (data.status === "progress" && typeof data.pct === "number") {
+				app.setProgress(data.userId, data.pct);
+			}
 
 			await app.render(false);
 
@@ -325,6 +440,9 @@ function installPreloadWrappers_libWrapper() {
 		register("Scene.prototype.preload", async function (wrapped, ...args) {
 			try {
 				DL(`lw[Scene#preload]: started for "${this.name}" (${this.id})`);
+				PT_CURRENT_RUN.active = true;
+				PT_CURRENT_RUN.sceneId = this.id;
+				_ptInstallConsoleProgressTap();
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "started" });
 
 				if (game.user.isGM) { // only GMs track and display
@@ -346,6 +464,8 @@ function installPreloadWrappers_libWrapper() {
 					app.markDone(game.user.id);
 					await app.render(false);
 				}
+				PT_CURRENT_RUN.active = false;
+				_ptRemoveConsoleProgressTap();
 				return result;
 			} catch (e) {
 				DL(3, "lw[Scene#preload]: error", e);
@@ -364,6 +484,9 @@ function installPreloadWrappers_libWrapper() {
 				const name = sc?.name ?? String(id);
 
 				DL(`lw[game.scenes.preload]: started for "${name}" (${sceneId})`);
+				PT_CURRENT_RUN.active = true;
+				PT_CURRENT_RUN.sceneId = sceneId;
+				_ptInstallConsoleProgressTap();
 				emitStatus({ type: "preload-status", sceneId, userId: game.user.id, status: "started" });
 
 				if (game.user.isGM) {
@@ -385,6 +508,8 @@ function installPreloadWrappers_libWrapper() {
 					app.markDone(game.user.id);
 					await app.render(false);
 				}
+				PT_CURRENT_RUN.active = false;
+				_ptRemoveConsoleProgressTap();
 				return result;
 			} catch (e) {
 				DL(3, "lw[game.scenes.preload]: error", e);
@@ -418,6 +543,7 @@ Hooks.once("ready", () => {
 		}
 
 		registerSocketHandlers();
+		
 		const ok = installPreloadWrappers_libWrapper();
 		if (!ok) {
 			ui.notifications?.warn("Preload Tracker: no preload entrypoint found to wrap on this build.");
@@ -425,11 +551,29 @@ Hooks.once("ready", () => {
 			DL("ready(): libWrapper wrappers installed");
 		}
 		DL("ready(): socket + wrappers installed");
+
 	} catch (e) {
 		DL(3, "ready(): failed to initialize", e);
 	}
 });
 
 Hooks.once("init", () => {
-	DL("init(): preload-tracker ready");
+
+	//Register debul level setting
+	game.settings.register(MOD_ID, "debugLevel", {
+			name: game.i18n.localize("preload-tracker.settings.debugLevelName"),
+			hint: game.i18n.localize("preload-tracker.settings.debugLevelHint"),
+			scope: "world",
+			config: true,
+			type: String,
+			choices: {
+				"none": game.i18n.localize("preload-tracker.settings.debugLevelNone"),
+				"error": game.i18n.localize("preload-tracker.settings.debugLevelError"),
+				"warn": game.i18n.localize("preload-tracker.settings.debugLevelWarn"),
+				"all": game.i18n.localize("preload-tracker.settings.debugLevelAll")
+			},
+			default: "none", // Default to no logging
+			requiresReload: false
+		});
+	console.log(`%cPreload Tracker | init hook fired`, "color: #7e56db; font-weight: bold;");
 });

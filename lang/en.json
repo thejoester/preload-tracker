@@ -11,6 +11,14 @@
 		"alreadyActive": "Already active",
         "activateError": "Activate failed; see console.",
         "activateBtnTitle": "Waiting for all connected users to finish preloading",
-        "libwrapperReq": "Preload Tracker: libWrapper is required. Enable it and reload."
+        "libwrapperReq": "Preload Tracker: libWrapper is required. Enable it and reload.",
+        "settings": {
+            "debugLevelName": "Enable debugging",
+            "debugLevelHint": "Set the debug level for Preload Tracker.",
+            "debugLevelNone": "None",
+            "debugLevelError": "Errors",
+            "debugLevelWarn": "Warnings",
+            "debugLevelAll": "All"
+        }
     }
 }

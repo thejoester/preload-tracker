@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.6] - 2025-10-18
+### Added
+- Added updating percentage display for each user while loading. 
+
 ## [1.2.5] - 2025-10-10
 ### Fixed
 - Fixed bug causing `Cannot access 'MOD_ID' before initialization` error preventing loading of module.
