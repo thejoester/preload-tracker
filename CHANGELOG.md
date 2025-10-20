@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.7] - 2025-10-20
+### Changed
+- updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+
 ## [1.2.6] - 2025-10-18
 ### Added
 - Added updating percentage display for each user while loading. 
