@@ -11,6 +11,14 @@
 		"alreadyActive": "Aktualnie aktywny",
         "activateError": "Aktywacja nie powiodła się; zobacz konsolę.",
         "activateBtnTitle": "Oczekiwanie na zakończenie wstępnego ładowania przez wszystkich podłączonych użytkowników",
-        "libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę."
+        "libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę.",
+        "settings": {
+            "debugLevelName": "Włącz debugowanie",
+            "debugLevelHint": "Ustaw poziom debugowania dla Preload Tracker.",
+            "debugLevelNone": "Brak",
+            "debugLevelError": "Błędy",
+            "debugLevelWarn": "Ostrzeżenia",
+            "debugLevelAll": "Wszystkie"
+        }
     }
 }
