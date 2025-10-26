@@ -7,8 +7,7 @@ FoundryVTT Module to help Game Master track status of preloading scene for conne
 
 [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
 
-<br/><br/>
-<a href='https://ko-fi.com/X8X817QMZQ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+<br/><a href='https://ko-fi.com/thejoester/tip' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## Credits
 I would like to extend a thanks to the following people for helping contribute to this module!
