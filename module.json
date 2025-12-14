@@ -3,7 +3,7 @@
     "title": "Preload Tracker",
     "version": "1.0.1",
     "compatibility": {
-        "minimum": "13",
+        "minimum": "12",
         "verified": "13"
     },
     "description": "<p>When preloading a scene, show a window with status of all users and mark as they finish preloading.</p>",

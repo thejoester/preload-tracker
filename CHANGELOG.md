@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.9] - 2025-12-14
+### Changed
+- updated to work with v12.
+
 ## [1.2.8] - 2025-10-25
 ### Changed
 - Updated French localization. Credit [Rectulo](https://gitlocalize.com/users/rectulo)!
