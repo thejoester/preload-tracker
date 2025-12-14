@@ -1,7 +1,7 @@
 {
     "id": "preload-tracker",
     "title": "Preload Tracker",
-    "version": "1.0.1",
+    "version": "0.0.0",
     "compatibility": {
         "minimum": "12",
         "verified": "13"
