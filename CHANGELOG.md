@@ -1,9 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-01-21
+### Added
+- Added tracker to preloading audio from playlists. Thanks: [LittleFluffy](https://github.com/LittleFluffy)!
+
 ## [1.2.9] - 2025-12-14
 ### Changed
-- updated to work with v12.
+- Updated to work with v12.
 
 ## [1.2.8] - 2025-10-25
 ### Changed
@@ -11,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.7] - 2025-10-20
 ### Changed
-- updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+- Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
 
 ## [1.2.6] - 2025-10-18
 ### Added

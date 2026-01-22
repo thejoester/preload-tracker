@@ -1,24 +1,24 @@
 {
-    "preload-tracker":{
-        "title": "Preload Status",
-        "preloading": "Preloading:",
-        "preloadingScene": "Preloading scene...",
-        "finished": "Finished",
-        "loading": "Loading",
-        "waiting": "Waiting",
-        "close": "Close",
-        "activate": "Activate",
+	"preload-tracker": {
+		"title": "Preload Status",
+		"preloading": "Preloading:",
+		"preloadingScene": "Preloading scene...",
+		"finished": "Finished",
+		"loading": "Loading",
+		"waiting": "Waiting",
+		"close": "Close",
+		"activate": "Activate",
 		"alreadyActive": "Already active",
-        "activateError": "Activate failed; see console.",
-        "activateBtnTitle": "Waiting for all connected users to finish preloading",
-        "libwrapperReq": "Preload Tracker: libWrapper is required. Enable it and reload.",
-        "settings": {
-            "debugLevelName": "Enable debugging",
-            "debugLevelHint": "Set the debug level for Preload Tracker.",
-            "debugLevelNone": "None",
-            "debugLevelError": "Errors",
-            "debugLevelWarn": "Warnings",
-            "debugLevelAll": "All"
-        }
-    }
+		"activateError": "Activate failed; see console.",
+		"activateBtnTitle": "Waiting for all connected users to finish preloading",
+		"libwrapperReq": "Preload Tracker: libWrapper is required. Enable it and reload.",
+		"settings": {
+			"debugLevelName": "Enable debugging",
+			"debugLevelHint": "Set the debug level for Preload Tracker.",
+			"debugLevelNone": "None",
+			"debugLevelError": "Errors",
+			"debugLevelWarn": "Warnings",
+			"debugLevelAll": "All"
+		}
+	}
 }
