@@ -1,11 +1,14 @@
 # Preload Manager
 
-FoundryVTT Module to help Game Master track status of preloading scene for connected users.
+FoundryVTT Module to help Game Master track status of preloading scenes and playlist audio for connected users.
 
 <img alt="image" src="http://thejoester.com/foundryvtt/preload-tracker/pt1.gif" />
 
 
+<img width="335" height="233" alt="image" src="https://github.com/user-attachments/assets/091080e8-ed0d-417d-aa54-f57664b4d0c3" />
+
 [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
+
 
 <br/><a href='https://ko-fi.com/thejoester/tip' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
