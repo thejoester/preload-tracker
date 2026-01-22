@@ -12,6 +12,12 @@
 		"activateError": "Activate failed; see console.",
 		"activateBtnTitle": "Waiting for all connected users to finish preloading",
 		"libwrapperReq": "Preload Tracker: libWrapper is required. Enable it and reload.",
+        "preloadingSound": "Preloading Sound",
+        "audioTitle": "Audio Preload Tracker",
+        "playBtn": "Play",
+        "playHint": "Play sound",
+        "noUsers": "No users connected.",
+        "playError": "Error playing (check console).",
 		"settings": {
 			"debugLevelName": "Enable debugging",
 			"debugLevelHint": "Set the debug level for Preload Tracker.",

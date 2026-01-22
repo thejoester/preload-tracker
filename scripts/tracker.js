@@ -530,8 +530,8 @@ class AudioPreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		const title = document.createElement("div");
 		title.style.fontWeight = "600";
 		title.textContent = this.label
-			? `${LT.preloadingSound()} ${this.label}`
-			: LT.preloadingSoundGeneric();
+			? `${LT.preloadingSound()}: ${this.label}`
+			: LT.preloadingSound();
 		wrapper.appendChild(title);
 
 		// User list
@@ -637,7 +637,6 @@ class AudioPreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 
 		return wrapper;
 	}
-
 }
 
 /* =====================================================================================
@@ -1057,7 +1056,6 @@ function installAudioPreloadWrappers_libWrapper() {
 Hooks.once("ready", () => {
 	
 	try {
-
 		// Ensure Libwrapper is available
 		if (!game.modules.get("lib-wrapper")?.active) {
 			DL(3, "ready(): libWrapper is REQUIRED. Enable the 'libWrapper' module and reload.");
