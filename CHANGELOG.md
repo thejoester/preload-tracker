@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-01-22
+### Fixed
+- Fixed bug preventing scene preload functionality to work. ([Issue #12](https://github.com/thejoester/preload-tracker/issues/12))
+
 ## [1.3.0] - 2026-01-21
 ### Added
 - Added tracker to preloading audio from playlists. Thanks: [LittleFluffy](https://github.com/LittleFluffy)!
