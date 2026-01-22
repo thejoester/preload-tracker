@@ -1,9 +1,9 @@
 {
   "preload-tracker": {
-    "title": "Preload Status",
-    "preloading": "Preloading:",
-    "preloadingScene": "Preloading scene...",
-    "finished": "Finished",
+    "title": "Estado de precarga",
+    "preloading": "Precarga:",
+    "preloadingScene": "Escena de precarga...",
+    "finished": "Finalizado",
     "loading": "Cargando",
     "waiting": "En espera",
     "close": "Cerrar",
@@ -12,6 +12,12 @@
     "activateError": "La activación falló; consulte la consola.",
     "activateBtnTitle": "Esperando a que todos los usuarios conectados terminen la precarga",
     "libwrapperReq": "Rastreador de precarga: se requiere libWrapper. Habilítelo y vuelva a cargar.",
+    "preloadingSound": "Precarga de sonido",
+    "audioTitle": "Rastreador de precarga de audio",
+    "playBtn": "Jugar",
+    "playHint": "Reproducir sonido",
+    "noUsers": "No hay usuarios conectados.",
+    "playError": "Error al reproducir (verificar consola).",
     "settings": {
       "debugLevelName": "Habilitar la depuración",
       "debugLevelHint": "Establezca el nivel de depuración para Preload Tracker.",
