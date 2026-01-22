@@ -3,6 +3,7 @@ import { LT } from "./localization.js";
 
 // Track whether we are currently within a preload run on this client
 let PT_CURRENT_RUN = { active: false, sceneId: null };
+let PT_ORIG_CONSOLE_LOG = null; // to store original console.log
 
 // Audio preload tracking (Playlist Sound "Preload")
 let PT_AUDIO_CURRENT_RUN = { active: false, runId: null, src: null, label: null };
