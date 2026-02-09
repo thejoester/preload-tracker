@@ -1,24 +1,30 @@
 {
-    "preload-tracker":{
-        "title": "Stan wstępnego załadowania",
-        "preloading": "Wstępne ładowanie:",
-        "preloadingScene": "Ładowanie sceny...",
-        "finished": "Zakończono",
-        "loading": "Ładowanie",
-        "waiting": "Oczekiwanie",
-        "close": "Zamknij",
-        "activate": "Aktywacja",
+	"preload-tracker": {
+		"title": "Stan wstępnego załadowania",
+		"preloading": "Wstępne ładowanie:",
+		"preloadingScene": "Ładowanie sceny...",
+		"finished": "Zakończono",
+		"loading": "Ładowanie",
+		"waiting": "Oczekiwanie",
+		"close": "Zamknij",
+		"activate": "Aktywacja",
 		"alreadyActive": "Aktualnie aktywny",
-        "activateError": "Aktywacja nie powiodła się; zobacz konsolę.",
-        "activateBtnTitle": "Oczekiwanie na zakończenie wstępnego ładowania przez wszystkich podłączonych użytkowników",
-        "libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę.",
-        "settings": {
-            "debugLevelName": "Włącz debugowanie",
-            "debugLevelHint": "Ustaw poziom debugowania dla Preload Tracker.",
-            "debugLevelNone": "Brak",
-            "debugLevelError": "Błędy",
-            "debugLevelWarn": "Ostrzeżenia",
-            "debugLevelAll": "Wszystkie"
-        }
-    }
+		"activateError": "Aktywacja nie powiodła się; zobacz konsolę.",
+		"activateBtnTitle": "Oczekiwanie na zakończenie wstępnego ładowania przez wszystkich podłączonych użytkowników",
+		"libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę.",
+        "preloadingSound": "Wstępne ładowanie dźwięku",
+        "audioTitle": "Monitorowanie wstępnego ładowania audio",
+        "playBtn": "Odtwórz",
+        "playHint": "Odtwórz dźwięk",
+        "noUsers": "Brak podłączonych użytkowników.",
+        "playError": "Błąd podczas odtwarzania (sprawdź konsolę).",
+		"settings": {
+			"debugLevelName": "Włącz debugowanie",
+			"debugLevelHint": "Ustaw poziom debugowania dla Preload Tracker.",
+			"debugLevelNone": "Brak",
+			"debugLevelError": "Błędy",
+			"debugLevelWarn": "Ostrzeżenia",
+			"debugLevelAll": "Wszystkie"
+		}
+	}
 }
