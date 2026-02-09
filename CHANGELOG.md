@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-02-09
+### Changed
+- Updated French localization. Credit [Rectulo](https://gitlocalize.com/users/rectulo)!
+- Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+
 ## [1.3.1] - 2026-01-22
 ### Fixed
 - Fixed bug preventing scene preload functionality to work. ([Issue #12](https://github.com/thejoester/preload-tracker/issues/12))
