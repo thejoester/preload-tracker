@@ -12,6 +12,12 @@
     "activateError": "L'activation a échoué ; voir la console.",
     "activateBtnTitle": "En attente de la fin du préchargement pour tous les utilisateurs connectés",
     "libwrapperReq": "Suivi de préchargement : libWrapper est requis. Activez-le et rechargez.",
+    "preloadingSound": "Préchargement du son",
+    "audioTitle": "Suivi du préchargement audio",
+    "playBtn": "Jouer",
+    "playHint": "Jouer le son",
+    "noUsers": "Aucun utilisateur connecté.",
+    "playError": "Erreur de lecture (vérifiez la console).",
     "settings": {
       "debugLevelName": "Activer le débogage",
       "debugLevelHint": "Définissez le niveau de débogage pour Preload Tracker.",
