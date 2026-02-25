@@ -6,9 +6,15 @@ FoundryVTT Module to help Game Master track status of preloading scenes and play
 
 
 <img width="335" height="233" alt="image" src="https://github.com/user-attachments/assets/091080e8-ed0d-417d-aa54-f57664b4d0c3" />
+<br> <br>
 
+Video Demo: [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
 
+<<<<<<< HEAD
 [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
+=======
+Race Mode: [https://youtu.be/j-SgdS8CVY4](https://youtu.be/j-SgdS8CVY4)
+>>>>>>> cd9a9da47b957a823a574704fd4b3b5ccb92c464
 
 <br/><a href='https://ko-fi.com/thejoester/tip' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 

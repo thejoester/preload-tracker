@@ -57,7 +57,7 @@ jobs:
           # Include only the files/folders this repo actually has
           zip -r "dist/$ZIPNAME" \
             module.json README.md "$LIC" CHANGELOG.md \
-            scripts/ lang/ \
+            scripts/ lang/ assets/ \
             -x "**/.DS_Store" "**/Thumbs.db"
 
       # ---- Keep a Changelog integration -----------------------------------
