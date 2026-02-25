@@ -8,6 +8,9 @@ FoundryVTT Module to help Game Master track status of preloading scenes and play
 <img width="335" height="233" alt="image" src="https://github.com/user-attachments/assets/091080e8-ed0d-417d-aa54-f57664b4d0c3" />
 <br> <br>
 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a51d96ce-3008-4a0a-bfaf-8a6b184558ce" />
+
+
 Video Demo: [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
 
 Race Mode: [https://youtu.be/9rJrLufA_jQ](https://youtu.be/9rJrLufA_jQ)
