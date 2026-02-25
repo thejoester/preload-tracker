@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-02-25
+### Added
+- Added "Race Mode" option:
+    - Shows race themed progress bar while pre-loading
+    - Option to send results of 1st, 2nd, and 3rd place to chat. 
+
 ## [1.3.2] - 2026-02-09
 ### Changed
 - Updated French localization. Credit [Rectulo](https://gitlocalize.com/users/rectulo)!

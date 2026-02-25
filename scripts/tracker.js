@@ -121,18 +121,71 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 
 	// Inject CSS styles once
 	_ensureStyles() {
-        if (PreloadTrackerApp._stylesInjected) return;
-        const css = document.createElement("style");
-        css.id = "pt-styles";
-        css.textContent = `
-        @keyframes pt-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .pt-spin { animation: pt-spin 1.6s linear infinite; }
-        .pt-green { color: #22c55e; }
-        .pt-orange { color: #f59e0b; }
-        .pt-mono { opacity: .65; }
-        `;
-        document.head.appendChild(css);
-        PreloadTrackerApp._stylesInjected = true;
+		if (PreloadTrackerApp._stylesInjected) return;
+		const css = document.createElement("style");
+		css.id = "pt-styles";
+		css.textContent = `
+		@keyframes pt-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+		.pt-spin { animation: pt-spin 1.6s linear infinite; }
+		.pt-green { color: #22c55e; }
+		.pt-orange { color: #f59e0b; }
+		.pt-mono { opacity: .65; }
+
+		/* Race Mode */
+		.pt-race-row {
+			display: grid;
+			grid-template-columns: 1fr 2fr auto;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.pt-race-name {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			min-width: 0;
+		}
+
+		.pt-race-name .pt-name-text {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.pt-bar {
+			position: relative;
+			height: 16px;
+			border-radius: 999px;
+			border: 1px solid #ffffffdc;
+			background: #190088;
+			overflow: visible; /* allow icon to sit above */
+			margin-top: 10px;   /* space for icon */
+		}
+
+		.pt-bar-icon {
+			position: absolute;
+			top: -12px; /* move above bar */
+			transform: translateX(-50%);
+			height: 28px;
+			width: 28px;
+			pointer-events: none;
+			color: #ffffff;
+			filter: drop-shadow(0 2px 4px #080808);
+			z-index: 2;
+		}
+
+		.pt-trophy {
+			height: 16px;
+			width: 16px;
+			vertical-align: -2px;
+		}
+
+		.pt-trophy-gold { filter: invert(82%) sepia(69%) saturate(465%) hue-rotate(2deg) brightness(100%) contrast(98%); }
+		.pt-trophy-silver { filter: invert(86%) sepia(0%) saturate(0%) hue-rotate(165deg) brightness(108%) contrast(90%); }
+		.pt-trophy-copper { filter: invert(53%) sepia(51%) saturate(509%) hue-rotate(345deg) brightness(93%) contrast(95%); }
+		`;
+		document.head.appendChild(css);
+		PreloadTrackerApp._stylesInjected = true;
 	}
 
 	// Set current scene info
@@ -149,6 +202,8 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 			rec.started = false;
 			rec.done = false;
 			rec.pct = 0;
+			rec.startedAt = null;
+			rec.finishedAt = null;
 			this.users.set(uid, rec);
 		}
 	}
@@ -157,7 +212,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	ensureUsersFromGame() {
 		for (const u of game.users.contents) {
 			if (!this.users.has(u.id)) {
-				this.users.set(u.id, { name: u.name, isGM: u.isGM, started: false, done: false, pct: 0 });
+				this.users.set(u.id, { name: u.name, isGM: u.isGM, started: false, done: false, pct: 0, startedAt: null, finishedAt: null });
 			} else {
 				const rec = this.users.get(u.id);
 				rec.name = u.name;
@@ -170,20 +225,37 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	// Mark user as started
 	markStarted(userId) {
 		const rec = this.users.get(userId);
-		if (rec) { rec.started = true; this.users.set(userId, rec); }
+		if (!rec) return;
+
+		if (!rec.startedAt) rec.startedAt = Date.now();
+		rec.started = true;
+		this.users.set(userId, rec);
 	}
 
 	// Mark user as done
 	markDone(userId) {
 		const rec = this.users.get(userId);
-		if (rec) { rec.started = true; rec.done = true; rec.pct = 100; this.users.set(userId, rec); }
+		if (!rec) return;
+
+		if (!rec.startedAt) rec.startedAt = Date.now();
+		if (!rec.finishedAt) rec.finishedAt = Date.now();
+		rec.started = true;
+		rec.done = true;
+		rec.pct = 100;
+		this.users.set(userId, rec);
 	}
 
 	// Set user progress percentage
 	setProgress(userId, pct) {
 		const rec = this.users.get(userId);
 		if (!rec) return;
+
 		const n = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+
+		// First progress tick counts as "started" for race timing
+		if (!rec.startedAt && n > 0) rec.startedAt = Date.now();
+		if (n > 0) rec.started = true;
+
 		if (n >= (rec.pct ?? 0) || n === 0 || n === 100) {
 			rec.pct = n;
 			this.users.set(userId, rec);
@@ -209,9 +281,15 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 
 	/* ===== UI ===== */
 
+	// Build the inner content of the preload tracker window
 	async _buildInner() {
 		const wrapper = document.createElement("div");
 		wrapper.style.padding = "0.5rem";
+
+		const raceMode = !!game.settings.get(MOD_ID, "enableRaceMode");
+		const modulePath = game.modules.get(MOD_ID)?.path ?? `modules/${MOD_ID}`;
+
+		const iconUrl = (file) => `${modulePath}/assets/${file}`;
 
 		const title = document.createElement("div");
 		title.style.fontWeight = "600";
@@ -228,46 +306,173 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		let allOnlineDone = true;
 		const onlineUsers = game.users.contents.filter(u => u.active);
 
+		// Race computations (only used when enabled)
+		const rankByUserId = new Map(); // userId => { place, durationMs }
+		let raceLastUserId = null;
+
+		if (raceMode && onlineUsers.length) {
+			const finished = [];
+			for (const u of onlineUsers) {
+				const rec = this.users.get(u.id) || { started: false, done: false, pct: 0 };
+				if (!rec.done) continue;
+
+				const startedAt = rec.startedAt ?? rec.finishedAt ?? Date.now();
+				const finishedAt = rec.finishedAt ?? Date.now();
+				const durationMs = Math.max(0, finishedAt - startedAt);
+
+				finished.push({ userId: u.id, finishedAt, durationMs });
+			}
+
+			finished.sort((a, b) => (a.finishedAt ?? 0) - (b.finishedAt ?? 0));
+
+			finished.forEach((r, i) => {
+				rankByUserId.set(r.userId, { place: i + 1, durationMs: r.durationMs });
+			});
+
+			if (finished.length === onlineUsers.length) {
+				raceLastUserId = finished[finished.length - 1]?.userId ?? null;
+			}
+		}
+
+		const isRaceFinished = raceMode && onlineUsers.length && rankByUserId.size === onlineUsers.length;
+
+		// Determine current "last place" while the race is still going
+		let currentLastUserId = null;
+		if (raceMode && !isRaceFinished && onlineUsers.length) {
+			let lowest = { userId: null, pct: 101 };
+			for (const u of onlineUsers) {
+				const rec = this.users.get(u.id) || { started: false, done: false, pct: 0 };
+				if (!rec.started) continue;
+				const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
+				if (pct < lowest.pct) lowest = { userId: u.id, pct };
+			}
+			currentLastUserId = lowest.userId;
+		}
+
 		for (const u of onlineUsers) {
+			const rec = this.users.get(u.id) || { started: false, done: false, pct: 0 };
+
+			// Track all-online-done
+			if (!rec.done) allOnlineDone = false;
+
 			const row = document.createElement("div");
-			row.style.display = "grid";
-			row.style.gridTemplateColumns = "1fr auto"; // name | status icon
-			row.style.alignItems = "center";
-			row.style.gap = "8px";
 			row.style.padding = "6px 8px";
 			row.style.border = "1px solid #00000020";
 			row.style.borderRadius = "8px";
 			row.style.background = "#0000000a";
 
-			const rec = this.users.get(u.id) || { started: false, done: false };
+			if (!raceMode) {
+				row.style.display = "grid";
+				row.style.gridTemplateColumns = "1fr auto"; // name | status icon
+				row.style.alignItems = "center";
+				row.style.gap = "8px";
 
-			// Track all-online-done
-			if (!rec.done) allOnlineDone = false;
+				const name = document.createElement("div");
+				name.textContent = u.name + (u.isGM ? " (GM)" : "");
+				row.appendChild(name);
 
-			const name = document.createElement("div");
-			name.textContent = u.name + (u.isGM ? " (GM)" : "");
-			row.appendChild(name);
+				const status = document.createElement("div");
+				status.style.display = "flex";
+				status.style.alignItems = "center";
+				status.style.justifyContent = "flex-end";
+				status.style.minWidth = "1.25rem";
 
+				if (rec.done) {
+					status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i>`;
+				} else if (rec.started) {
+					const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
+					status.innerHTML = `
+						<i class="fas fa-spinner pt-spin pt-orange" title="${LT.loading()}"></i>
+						<span class="pt-mono" style="margin-left: 6px;">${pct}%</span>
+					`;
+				} else {
+					status.innerHTML = `<span class="pt-mono" title="${LT.waiting()}">—</span>`;
+				}
+
+				row.appendChild(status);
+				list.appendChild(row);
+				continue;
+			}
+
+			// ============================
+			// Race Mode row
+			// ============================
+			row.classList.add("pt-race-row");
+
+			// Name + placement icons
+			const nameWrap = document.createElement("div");
+			nameWrap.classList.add("pt-race-name");
+
+			const place = rankByUserId.get(u.id)?.place ?? null;
+
+			if (isRaceFinished && place && place <= 3) {
+				const trophy = document.createElement("img");
+				trophy.classList.add("pt-trophy", place === 1 ? "pt-trophy-gold" : place === 2 ? "pt-trophy-silver" : "pt-trophy-copper");
+				trophy.src = iconUrl("trophy.svg");
+				trophy.title = place === 1 ? LT.firstPlace() : place === 2 ? LT.secondPlace() : LT.thirdPlace();
+				nameWrap.appendChild(trophy);
+			} else if (isRaceFinished && raceLastUserId === u.id) {
+				const turtle = document.createElement("img");
+				turtle.classList.add("pt-trophy");
+				turtle.src = iconUrl("turtle.svg");
+				turtle.title = LT.lastPlace();
+				nameWrap.appendChild(turtle);
+			}
+
+			const nameText = document.createElement("div");
+			nameText.classList.add("pt-name-text");
+			nameText.textContent = u.name + (u.isGM ? " (GM)" : "");
+			nameWrap.appendChild(nameText);
+
+			row.appendChild(nameWrap);
+
+			// Progress bar with moving icon
+			const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
+
+			const bar = document.createElement("div");
+			bar.classList.add("pt-bar");
+
+			const fill = document.createElement("div");
+			fill.classList.add("pt-bar-fill");
+			fill.style.width = `${pct}%`;
+			bar.appendChild(fill);
+
+			const runner = document.createElement("img");
+			runner.classList.add("pt-bar-icon");
+
+			const shouldBeTurtle = isRaceFinished ? (raceLastUserId === u.id) : (currentLastUserId === u.id);
+			runner.src = shouldBeTurtle ? iconUrl("turtle.svg") : iconUrl("rabbit.svg");
+			runner.style.left = `${pct}%`;
+			bar.appendChild(runner);
+
+			row.appendChild(bar);
+
+			// Status cell (pct / done)
 			const status = document.createElement("div");
 			status.style.display = "flex";
 			status.style.alignItems = "center";
 			status.style.justifyContent = "flex-end";
-			status.style.minWidth = "1.25rem";
+			status.style.minWidth = "5rem";
 
 			if (rec.done) {
-				status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i>`;
+				const dur = rankByUserId.get(u.id)?.durationMs ?? 0;
+				const secs = (dur / 1000).toFixed(1);
+				status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i><span class="pt-mono" style="margin-left: 6px;">${secs}s</span>`;
 			} else if (rec.started) {
-				const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
-				status.innerHTML = `
-					<i class="fas fa-spinner pt-spin pt-orange" title="${LT.loading()}"></i>
-					<span class="pt-mono" style="margin-left: 6px;">${pct}%</span>
-				`;
+				status.innerHTML = `<span class="pt-mono" title="${LT.loading()}">${pct}%</span>`;
 			} else {
 				status.innerHTML = `<span class="pt-mono" title="${LT.waiting()}">—</span>`;
 			}
 
 			row.appendChild(status);
 			list.appendChild(row);
+		}
+
+		if (!onlineUsers.length) {
+			const none = document.createElement("div");
+			none.classList.add("pt-mono");
+			none.textContent = LT.noUsers();
+			list.appendChild(none);
 		}
 
 		wrapper.appendChild(list);
@@ -277,6 +482,120 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		actions.style.justifyContent = "flex-end";
 		actions.style.gap = "8px";
 		actions.style.marginTop = "10px";
+
+		// Send to chat (GM only, race finished only)
+		if (game.user.isGM && raceMode && isRaceFinished) {
+			const chatBtn = document.createElement("button");
+			chatBtn.classList.add("button");
+			chatBtn.type = "button";
+			chatBtn.textContent = LT.sendToChat();
+			chatBtn.addEventListener("click", async () => {
+				try {
+					const results = onlineUsers
+						.map(u => {
+							const r = rankByUserId.get(u.id);
+							return { user: u, place: r?.place ?? null, durationMs: r?.durationMs ?? 0 };
+						})
+						.sort((a, b) => (a.place ?? 9999) - (b.place ?? 9999));
+
+					const iconBaseUrl = `/modules/${MOD_ID}`;
+
+					const iconSpan = (file, filterStyle = "") => {
+						const src = `${iconBaseUrl}/assets/${file}`;
+						const style = [
+							"display:inline-block",
+							"width:16px",
+							"height:16px",
+							"vertical-align:-2px",
+							"margin-right:4px",
+							`background:url('${src}') no-repeat center / contain`,
+							filterStyle ? `filter:${filterStyle}` : ""
+						].filter(Boolean).join(";");
+						return `<span style="${style}"></span>`;
+					};
+
+					const trophyGold = () => iconSpan("trophy.svg", "invert(82%) sepia(69%) saturate(465%) hue-rotate(2deg) brightness(100%) contrast(98%)");
+					const trophySilver = () => iconSpan("trophy.svg", "invert(86%) sepia(0%) saturate(0%) hue-rotate(165deg) brightness(108%) contrast(90%)");
+					const trophyCopper = () => iconSpan("trophy.svg", "invert(53%) sepia(51%) saturate(509%) hue-rotate(345deg) brightness(93%) contrast(95%)");
+					const turtleIcon = () => iconSpan("turtle.svg");
+
+					// Build HTML for chat message
+					let html = `
+						<div style="
+							background:#111;
+							border:1px solid #000;
+							border-radius:8px;
+							padding:10px;
+							color:#eee;
+							font-family:var(--font-primary);
+							box-shadow:0 0 8px #00000055;
+						">
+							<div style="
+								font-weight:700;
+								font-size:1.1rem;
+								color:#f0d36b;
+								margin-bottom:8px;
+								letter-spacing:0.5px;
+							">
+								🏁 ${LT.raceResultsTitle()}${this.sceneName ? `:<br />${foundry.utils.escapeHTML(this.sceneName)}` : ""}
+							</div>
+
+							<div style="display:flex;flex-direction:column;gap:6px;">
+						`;
+
+					for (const r of results) {
+						const secs = (Math.max(0, r.durationMs) / 1000).toFixed(1);
+
+						let medal = "";
+						if (r.place === 1) medal = trophyGold();
+						else if (r.place === 2) medal = trophySilver();
+						else if (r.place === 3) medal = trophyCopper();
+						else if (r.place === results.length) medal = turtleIcon();
+
+						html += `
+							<div style="
+								display:flex;
+								align-items:center;
+								justify-content:space-between;
+								padding:6px 8px;
+								background:#1b1b1b;
+								border-radius:6px;
+								border:1px solid #00000055;
+							">
+								<div style="display:flex;align-items:center;gap:6px;">
+									<span style="
+										font-weight:700;
+										color:#aaa;
+										width:20px;
+									">${r.place}.</span>
+									${medal}
+									<span style="font-weight:600;">
+										${foundry.utils.escapeHTML(r.user.name)}
+									</span>
+								</div>
+
+								<span style="
+									color:#bbb;
+									font-size:0.9rem;
+								">
+									${secs}s
+								</span>
+							</div>
+						`;
+					}
+
+					html += `
+							</div>
+						</div>
+					`;
+
+					await ChatMessage.create({ content: html });
+				} catch (e) {
+					DL(3, "sendToChat(): failed", e);
+				}
+			});
+			actions.appendChild(chatBtn);
+		}
 
 		// Activate button (GM only), disabled until everyone online is done
 		if (game.user.isGM && this.sceneId) {
@@ -310,7 +629,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 					await this.close();
 					// activate
 					await sc.activate();
-					
+
 				} catch (e) {
 					DL(3, "activate(): failed", e);
 					ui.notifications?.error(LT.activateError());
@@ -1088,6 +1407,17 @@ Hooks.once("ready", () => {
 });
 
 Hooks.once("init", () => {
+
+	// Register Race Mode toggle
+	game.settings.register(MOD_ID, "enableRaceMode", {
+		name: game.i18n.localize("preload-tracker.settings.enableRaceModeName"),
+		hint: game.i18n.localize("preload-tracker.settings.enableRaceModeHint"),
+		scope: "world",
+		config: true,
+		type: Boolean,
+		default: false,
+		requiresReload: false
+	});
 
 	//Register debul level setting
 	game.settings.register(MOD_ID, "debugLevel", {
