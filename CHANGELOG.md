@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.1] - 2026-02-25
 ### Fixed
 - Included missing assets
+- included updated en.json localization file
 
 ## [1.4.0] - 2026-02-25
 ### Added
