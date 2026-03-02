@@ -31,7 +31,11 @@
 			"debugLevelNone": "None",
 			"debugLevelError": "Errors",
 			"debugLevelWarn": "Warnings",
-			"debugLevelAll": "All"
+			"debugLevelAll": "All",
+			"raceResultsScopeName": "Race Results Include",
+			"raceResultsScopeHint": "Choose who is included in race placements.",
+			"raceResultsPlayers": "Players only",
+			"raceResultsAll": "GM + Players"
 		}
 	}
 }

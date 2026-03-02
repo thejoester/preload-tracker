@@ -305,14 +305,18 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		// Build rows for ONLINE users only, and compute all-online-done gate
 		let allOnlineDone = true;
 		const onlineUsers = game.users.contents.filter(u => u.active);
+		const raceScope = game.settings.get(MOD_ID, "raceResultsScope");
+		const rankedUsers = (raceScope === "players")
+			? onlineUsers.filter(u => !u.isGM)
+			: onlineUsers;
 
 		// Race computations (only used when enabled)
 		const rankByUserId = new Map(); // userId => { place, durationMs }
 		let raceLastUserId = null;
 
-		if (raceMode && onlineUsers.length) {
+		if (raceMode && rankedUsers.length) {
 			const finished = [];
-			for (const u of onlineUsers) {
+			for (const u of rankedUsers) {
 				const rec = this.users.get(u.id) || { started: false, done: false, pct: 0 };
 				if (!rec.done) continue;
 
@@ -329,12 +333,12 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 				rankByUserId.set(r.userId, { place: i + 1, durationMs: r.durationMs });
 			});
 
-			if (finished.length === onlineUsers.length) {
+			if (finished.length === rankedUsers.length) {
 				raceLastUserId = finished[finished.length - 1]?.userId ?? null;
 			}
 		}
 
-		const isRaceFinished = raceMode && onlineUsers.length && rankByUserId.size === onlineUsers.length;
+		const isRaceFinished = raceMode && rankedUsers.length && rankByUserId.size === rankedUsers.length;
 
 		// Determine current "last place" while the race is still going
 		let currentLastUserId = null;
@@ -491,7 +495,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 			chatBtn.textContent = LT.sendToChat();
 			chatBtn.addEventListener("click", async () => {
 				try {
-					const results = onlineUsers
+					const results = rankedUsers
 						.map(u => {
 							const r = rankByUserId.get(u.id);
 							return { user: u, place: r?.place ?? null, durationMs: r?.durationMs ?? 0 };
@@ -1416,6 +1420,21 @@ Hooks.once("init", () => {
 		config: true,
 		type: Boolean,
 		default: false,
+		requiresReload: false
+	});
+
+	// 
+	game.settings.register(MOD_ID, "raceResultsScope", {
+		name: game.i18n.localize("preload-tracker.settings.raceResultsScopeName"),
+		hint: game.i18n.localize("preload-tracker.settings.raceResultsScopeHint"),
+		scope: "world",
+		config: true,
+		type: String,
+		choices: {
+			"players": game.i18n.localize("preload-tracker.settings.raceResultsPlayers"),
+			"all": game.i18n.localize("preload-tracker.settings.raceResultsAll")
+		},
+		default: "players",
 		requiresReload: false
 	});
 
