@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] - 2026-03-02
+### Changed
+- Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+
 ## [1.4.2] - 2026-03-01
 ### Changed
 - Added setting to specifiy who to include in race results, `Players only` or `GM + Players`. Defaults to `Players only`
