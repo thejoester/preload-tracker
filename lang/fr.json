@@ -18,13 +18,25 @@
     "playHint": "Jouer le son",
     "noUsers": "Aucun utilisateur connecté.",
     "playError": "Erreur de lecture (vérifiez la console).",
+    "sendToChat": "Envoyer dans la conversation",
+    "raceResultsTitle": "Résultats du classement de préchargement",
+    "firstPlace": "1ère place",
+    "secondPlace": "2e place",
+    "thirdPlace": "3e place",
+    "lastPlace": "Dernière place",
     "settings": {
+      "enableRaceModeName": "Activer le mode course",
+      "enableRaceModeHint": "Affiche une barre de progression avec des icônes de lapin/tortue et le classement lorsque tout le monde a terminé.",
       "debugLevelName": "Activer le débogage",
       "debugLevelHint": "Définissez le niveau de débogage pour Preload Tracker.",
       "debugLevelNone": "Aucun",
       "debugLevelError": "Erreurs",
       "debugLevelWarn": "Avertissements",
-      "debugLevelAll": "Tous"
+      "debugLevelAll": "Tous",
+      "raceResultsScopeName": "Les résultats du classement incluent",
+      "raceResultsScopeHint": "Choisissez les participants à inclure dans le classement.",
+      "raceResultsPlayers": "Joueurs uniquement",
+      "raceResultsAll": "MJ + Joueurs"
     }
   }
 }
