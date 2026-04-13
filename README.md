@@ -2,13 +2,23 @@
 
 FoundryVTT Module to help Game Master track status of preloading scenes and playlist audio for connected users.
 
-<img alt="image" src="http://thejoester.com/foundryvtt/preload-tracker/pt1.gif" />
+## Features
+- ### Scene Preloading:<br>
+<img alt="image" src="http://thejoester.com/foundryvtt/preload-tracker/pt1.gif" /><br>
 
-
+- ### Race mode:<br>
+<img width="493" height="278" alt="image" src="https://github.com/user-attachments/assets/7224c520-dd6e-460a-b812-4b5b6bf3f04d" /><br>
+<img width="297" height="190" alt="image" src="https://github.com/user-attachments/assets/16c6bec7-f6c9-4873-812f-2d9adf27f762" /><br>
+- ### Adds marker indicators of which players are on which scene<br>
+<img width="296" height="290" alt="image" src="https://github.com/user-attachments/assets/d1a6fba1-f435-4f21-be31-33ee07198c6d" /><br>
+- ### Added Preload option to Sidebar scene list:<br>
+<img width="306" height="308" alt="image" src="https://github.com/user-attachments/assets/2667d18c-39ad-489e-9d01-1fc0b0ddd751" /><br>
+- ### Audio preloading:<br>
 <img width="335" height="233" alt="image" src="https://github.com/user-attachments/assets/091080e8-ed0d-417d-aa54-f57664b4d0c3" />
 <br> <br>
 
-Video Demo: [https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
+## Video Demo: 
+[https://www.youtube.com/watch?v=OqG82XA9e8I](https://www.youtube.com/watch?v=OqG82XA9e8I)
 
 Race Mode: [https://youtu.be/j-SgdS8CVY4](https://youtu.be/j-SgdS8CVY4)
 
