@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.4] - 2026-04-04
+### Changed
+- Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+- Updated French localization. Credit [Rectulo](https://gitlocalize.com/users/rectulo)!
+
 ## [1.4.3] - 2026-03-02
 ### Changed
 - Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!

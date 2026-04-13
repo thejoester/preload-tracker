@@ -31,7 +31,11 @@
 			"debugLevelNone": "Brak",
 			"debugLevelError": "Błędy",
 			"debugLevelWarn": "Ostrzeżenia",
-			"debugLevelAll": "Wszystkie"
+			"debugLevelAll": "Wszystkie",
+			"raceResultsScopeName": "Wyniki wyścigu obejmują",
+			"raceResultsScopeHint": "Wybierz, kto zostanie uwzględniony w klasyfikacji wyścigu.",
+			"raceResultsPlayers": "Tylko gracze",
+			"raceResultsAll": "MG + Gracze"
 		}
 	}
 }
