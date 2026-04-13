@@ -12,6 +12,7 @@
 		"activateError": "Activate failed; see console.",
 		"activateBtnTitle": "Waiting for all connected users to finish preloading",
 		"libwrapperReq": "Preload Tracker: libWrapper is required. Enable it and reload.",
+		"preloadScene": "Preload Scene",
         "preloadingSound": "Preloading Sound",
         "audioTitle": "Audio Preload Tracker",
         "playBtn": "Play",

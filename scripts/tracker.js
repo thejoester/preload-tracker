@@ -1456,3 +1456,30 @@ Hooks.once("init", () => {
 		});
 	console.log(`%cPreload Tracker | init hook fired`, "color: #7e56db; font-weight: bold;");
 });
+
+/* =====================================================================================
+	SCENE SIDEBAR CONTEXT MENU
+===================================================================================== */
+Hooks.on("getSceneContextOptions", (app, contextOptions) => {
+	contextOptions.push({
+		name: LT.preloadScene(),
+		icon: '<i class="fas fa-cloud-download-alt"></i>',
+		condition: () => game.user.isGM,
+		callback: (li) => {
+			const el = li instanceof HTMLElement ? li : li[0];
+			const entryEl = el?.closest("[data-entry-id]") ?? el;
+			const sceneId = entryEl?.dataset?.entryId ?? el?.dataset?.sceneId;
+			if (!sceneId) {
+				DL(2, "getSceneContextOptions: could not find scene id on element", li);
+				return;
+			}
+			const scene = game.scenes.get(sceneId);
+			if (!scene) {
+				DL(2, "getSceneContextOptions: scene not found", { sceneId });
+				return;
+			}
+			DL(`context menu Preload: "${scene.name}" (${scene.id})`);
+			game.scenes.preload(scene.id, true);
+		}
+	});
+});
