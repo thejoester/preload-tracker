@@ -1,3 +1,6 @@
+# markdownlint config file
+.markdownlint.json
+
 # Logs
 logs
 *.log

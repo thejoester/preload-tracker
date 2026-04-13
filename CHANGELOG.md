@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-04-13
+### Changed
+- **V14:** This release add official support for FoundryVTT v14!
+### Added
+- Added **Preload Scene** function to context menu in scene sidebar, now you can right-click scene in sidebar and preload the scene.
+
 ## [1.4.4] - 2026-04-04
 ### Changed
 - Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
@@ -22,8 +28,8 @@ All notable changes to this project will be documented in this file.
 ## [1.4.0] - 2026-02-25
 ### Added
 - Added "Race Mode" option:
-    - Shows race themed progress bar while pre-loading
-    - Option to send results of 1st, 2nd, and 3rd place to chat. 
+  - Shows race themed progress bar while pre-loading
+  - Option to send results of 1st, 2nd, and 3rd place to chat. 
 
 ## [1.3.2] - 2026-02-09
 ### Changed

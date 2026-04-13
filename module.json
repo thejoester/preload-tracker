@@ -4,7 +4,7 @@
     "version": "0.0.0",
     "compatibility": {
         "minimum": "12",
-        "verified": "13"
+        "verified": "14"
     },
     "description": "<p>When preloading a scene, show a window with status of all users and mark as they finish preloading.</p>",
     "authors": [
