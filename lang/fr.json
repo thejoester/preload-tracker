@@ -12,6 +12,7 @@
     "activateError": "L'activation a échoué ; voir la console.",
     "activateBtnTitle": "En attente de la fin du préchargement pour tous les utilisateurs connectés",
     "libwrapperReq": "Suivi de préchargement : libWrapper est requis. Activez-le et rechargez.",
+    "preloadScene": "Précharger une scène",
     "preloadingSound": "Préchargement du son",
     "audioTitle": "Suivi du préchargement audio",
     "playBtn": "Jouer",
