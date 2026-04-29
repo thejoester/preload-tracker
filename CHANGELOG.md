@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-04-29
+### Changed
+- Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+- Updated French localization. Credit [Rectulo](https://gitlocalize.com/users/rectulo)!
+
 ## [2.0.0] - 2026-04-13
 ### Changed
 - **V14:** This release add official support for FoundryVTT v14!
