@@ -12,32 +12,19 @@
     "activateError": "L'activation a échoué ; voir la console.",
     "activateBtnTitle": "En attente de la fin du préchargement pour tous les utilisateurs connectés",
     "libwrapperReq": "Suivi de préchargement : libWrapper est requis. Activez-le et rechargez.",
-    "preloadScene": "Précharger une scène",
     "preloadingSound": "Préchargement du son",
     "audioTitle": "Suivi du préchargement audio",
     "playBtn": "Jouer",
     "playHint": "Jouer le son",
     "noUsers": "Aucun utilisateur connecté.",
     "playError": "Erreur de lecture (vérifiez la console).",
-    "sendToChat": "Envoyer dans la conversation",
-    "raceResultsTitle": "Résultats du classement de préchargement",
-    "firstPlace": "1ère place",
-    "secondPlace": "2e place",
-    "thirdPlace": "3e place",
-    "lastPlace": "Dernière place",
     "settings": {
-      "enableRaceModeName": "Activer le mode course",
-      "enableRaceModeHint": "Affiche une barre de progression avec des icônes de lapin/tortue et le classement lorsque tout le monde a terminé.",
       "debugLevelName": "Activer le débogage",
       "debugLevelHint": "Définissez le niveau de débogage pour Preload Tracker.",
       "debugLevelNone": "Aucun",
       "debugLevelError": "Erreurs",
       "debugLevelWarn": "Avertissements",
-      "debugLevelAll": "Tous",
-      "raceResultsScopeName": "Les résultats du classement incluent",
-      "raceResultsScopeHint": "Choisissez les participants à inclure dans le classement.",
-      "raceResultsPlayers": "Joueurs uniquement",
-      "raceResultsAll": "MJ + Joueurs"
+      "debugLevelAll": "Tous"
     }
   }
 }

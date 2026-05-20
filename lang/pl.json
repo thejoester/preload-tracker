@@ -12,7 +12,6 @@
 		"activateError": "Aktywacja nie powiodła się; zobacz konsolę.",
 		"activateBtnTitle": "Oczekiwanie na zakończenie wstępnego ładowania przez wszystkich podłączonych użytkowników",
 		"libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę.",
-		"preloadScene": "Wstępne załadowanie sceny",
         "preloadingSound": "Wstępne ładowanie dźwięku",
         "audioTitle": "Monitorowanie wstępnego ładowania audio",
         "playBtn": "Odtwórz",
@@ -32,11 +31,7 @@
 			"debugLevelNone": "Brak",
 			"debugLevelError": "Błędy",
 			"debugLevelWarn": "Ostrzeżenia",
-			"debugLevelAll": "Wszystkie",
-			"raceResultsScopeName": "Wyniki wyścigu obejmują",
-			"raceResultsScopeHint": "Wybierz, kto zostanie uwzględniony w klasyfikacji wyścigu.",
-			"raceResultsPlayers": "Tylko gracze",
-			"raceResultsAll": "MG + Gracze"
+			"debugLevelAll": "Wszystkie"
 		}
 	}
 }

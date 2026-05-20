@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-05-19
+### Added
+- Added option to show the preload tracker window to players (disabled by default). When enabled, players see the same status window as the GM, without the Activate and Send to Chat buttons.
+- When the GM clicks Activate, the tracker window is automatically closed for all players.
+
 ## [2.0.1] - 2026-04-29
 ### Changed
 - Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!

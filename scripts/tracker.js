@@ -262,6 +262,22 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		}
 	}
 
+	// Broadcast current state to all non-GM clients (GM only)
+	_broadcastState() {
+		if (!game.settings.get(MOD_ID, "showToPlayers")) return;
+		try {
+			const payload = {
+				type: "preload-state",
+				sceneId: this.sceneId,
+				sceneName: this.sceneName,
+				users: Array.from(this.users.entries()).map(([userId, rec]) => ({ userId, ...rec }))
+			};
+			game.socket.emit(`module.${MOD_ID}`, payload);
+		} catch (e) {
+			DL(3, "_broadcastState(): failed", e);
+		}
+	}
+
 	// Render overrides
 	async _renderHTML(options) {
 		this._ensureStyles();
@@ -629,6 +645,8 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 						return;
 					}
 					DL(`activate(): activating scene "${sc.name}" (${sc.id})`);
+					// tell players to close their window
+					game.socket.emit(`module.${MOD_ID}`, { type: "preload-close" });
 					// close window
 					await this.close();
 					// activate
@@ -1083,6 +1101,46 @@ function registerSocketHandlers() {
 				}
 
 				await app.render(false);
+				app._broadcastState();
+				return;
+			}
+
+			// ============================
+			// SCENE STATE BROADCAST: GM -> players
+			// ============================
+			if (data.type === "preload-state") {
+				if (game.user.isGM) return;
+
+				const app = PreloadTrackerApp.getInstance();
+				app.sceneId = data.sceneId ?? null;
+				app.sceneName = data.sceneName ?? "";
+				app.ensureUsersFromGame();
+
+				for (const u of (data.users ?? [])) {
+					if (!u.userId) continue;
+					const rec = app.users.get(u.userId) ?? { name: u.name ?? "", isGM: u.isGM ?? false, started: false, done: false, pct: 0, startedAt: null, finishedAt: null };
+					rec.started = u.started;
+					rec.done = u.done;
+					rec.pct = u.pct ?? 0;
+					rec.startedAt = u.startedAt ?? null;
+					rec.finishedAt = u.finishedAt ?? null;
+					if (u.name) rec.name = u.name;
+					if (u.isGM !== undefined) rec.isGM = u.isGM;
+					app.users.set(u.userId, rec);
+				}
+
+				if (!app.rendered) await app.render(true);
+				else await app.render(false);
+				return;
+			}
+
+			// ============================
+			// CLOSE: GM -> players
+			// ============================
+			if (data.type === "preload-close") {
+				if (game.user.isGM) return;
+				const app = PreloadTrackerApp.getInstance();
+				if (app.rendered) await app.close();
 				return;
 			}
 
@@ -1134,6 +1192,7 @@ function installPreloadWrappers_libWrapper() {
 					if (!app.rendered) await app.render(true);
 					app.markStarted(game.user.id);
 					await app.render(false);
+					app._broadcastState();
 				}
 
 				const result = await wrapped(...args);
@@ -1145,6 +1204,7 @@ function installPreloadWrappers_libWrapper() {
 					const app = PreloadTrackerApp.getInstance();
 					app.markDone(game.user.id);
 					await app.render(false);
+					app._broadcastState();
 				}
 
 				PT_CURRENT_RUN.active = false;
@@ -1181,6 +1241,7 @@ function installPreloadWrappers_libWrapper() {
 					if (!app.rendered) await app.render(true);
 					app.markStarted(game.user.id);
 					await app.render(false);
+					app._broadcastState();
 				}
 
 				const result = await wrapped(id, ...args);
@@ -1192,6 +1253,7 @@ function installPreloadWrappers_libWrapper() {
 					const app = PreloadTrackerApp.getInstance();
 					app.markDone(game.user.id);
 					await app.render(false);
+					app._broadcastState();
 				}
 
 				PT_CURRENT_RUN.active = false;
@@ -1412,6 +1474,17 @@ Hooks.once("ready", () => {
 
 Hooks.once("init", () => {
 
+	// Show tracker window to players
+	game.settings.register(MOD_ID, "showToPlayers", {
+		name: game.i18n.localize("preload-tracker.settings.showToPlayersName"),
+		hint: game.i18n.localize("preload-tracker.settings.showToPlayersHint"),
+		scope: "world",
+		config: true,
+		type: Boolean,
+		default: false,
+		requiresReload: false
+	});
+
 	// Register Race Mode toggle
 	game.settings.register(MOD_ID, "enableRaceMode", {
 		name: game.i18n.localize("preload-tracker.settings.enableRaceModeName"),
@@ -1461,6 +1534,8 @@ Hooks.once("init", () => {
 	SCENE SIDEBAR CONTEXT MENU
 ===================================================================================== */
 Hooks.on("getSceneContextOptions", (app, contextOptions) => {
+	// Only add to the sidebar, not the scene navigation bar at the top
+	if (app?.constructor?.name === "SceneNavigation") return;
 	contextOptions.push({
 		name: LT.preloadScene(),
 		icon: '<i class="fas fa-cloud-download-alt"></i>',

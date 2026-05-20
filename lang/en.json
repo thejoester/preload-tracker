@@ -25,6 +25,8 @@
 		"thirdPlace": "3rd place",
 		"lastPlace": "Last place",
 		"settings": {
+			"showToPlayersName": "Show Window to Players",
+			"showToPlayersHint": "When enabled, players will see the preload tracker window (without the Activate and Send to Chat buttons).",
 			"enableRaceModeName": "Enable Race Mode",
 			"enableRaceModeHint": "Show a race progress bar with rabbit/turtle icons and trophy placements when everyone finishes.",
 			"debugLevelName": "Enable debugging",
