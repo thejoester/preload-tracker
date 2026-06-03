@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2026-06-03
+### Changed
+- Updated release.yml to link release notes to actual release URL notes. 
+
 ## [2.1.0] - 2026-05-19
 ### Added
 - Added option to show the preload tracker window to players (disabled by default). When enabled, players see the same status window as the GM, without the Activate and Send to Chat buttons.
