@@ -12,6 +12,7 @@
 		"activateError": "Aktywacja nie powiodła się; zobacz konsolę.",
 		"activateBtnTitle": "Oczekiwanie na zakończenie wstępnego ładowania przez wszystkich podłączonych użytkowników",
 		"libwrapperReq": "Preload Tracker: wymagana jest biblioteka libWrapper. Włącz ją i ponownie załaduj stronę.",
+		"preloadScene": "Wstępne załadowanie sceny",
         "preloadingSound": "Wstępne ładowanie dźwięku",
         "audioTitle": "Monitorowanie wstępnego ładowania audio",
         "playBtn": "Odtwórz",
@@ -24,6 +25,8 @@
 		"thirdPlace": "3 miejsce",
 		"lastPlace": "Ostatnie miejsce",
 		"settings": {
+			"showToPlayersName": "Pokaż okno graczom",
+			"showToPlayersHint": "Po włączeniu tej opcji gracze będą widzieć okno monitorujące wstępne ładowanie (bez przycisków „Aktywuj” i „Wyślij na czat”).",
 			"enableRaceModeName": "Włącz tryb wyścigu",
 			"enableRaceModeHint": "Pokaż pasek postępu wyścigu z ikonami królika/żółwia i miejscami na podium, gdy wszyscy ukończą wyścig.",
 			"debugLevelName": "Włącz debugowanie",
@@ -31,7 +34,11 @@
 			"debugLevelNone": "Brak",
 			"debugLevelError": "Błędy",
 			"debugLevelWarn": "Ostrzeżenia",
-			"debugLevelAll": "Wszystkie"
+			"debugLevelAll": "Wszystkie",
+			"raceResultsScopeName": "Wyniki wyścigu obejmują",
+			"raceResultsScopeHint": "Wybierz, kto zostanie uwzględniony w klasyfikacji wyścigu.",
+			"raceResultsPlayers": "Tylko gracze",
+			"raceResultsAll": "MG + Gracze"
 		}
 	}
 }
