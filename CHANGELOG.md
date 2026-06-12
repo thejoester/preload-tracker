@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.2] - 2026-06-12
+### Changed
+- Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!
+
 ## [2.1.1] - 2026-06-03
 ### Changed
 - Updated release.yml to link release notes to actual release URL notes. 
