@@ -484,7 +484,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 					status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i>`;
 				} else if (Number(rec.pct ?? 0) >= 100) {
 					// hit 100% but never reported "done" - treat as finished but flag it
-					status.innerHTML = `<i class="fas fa-check pt-orange" title="${LT.finalizing()}"></i>`;
+					status.innerHTML = `<i class="fas fa-check pt-orange" title="${LT.finalizing()}"></i><span class="pt-mono" style="margin-left: 6px;">100%</span>`;
 				} else if (rec.started) {
 					const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
 					status.innerHTML = `
@@ -566,7 +566,7 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 				status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i><span class="pt-mono" style="margin-left: 6px;">${secs}s</span>`;
 			} else if (pct >= 100) {
 				// hit 100% but never reported "done" - treat as finished but flag it
-				status.innerHTML = `<i class="fas fa-check pt-orange" title="${LT.finalizing()}"></i>`;
+				status.innerHTML = `<i class="fas fa-check pt-orange" title="${LT.finalizing()}"></i><span class="pt-mono" style="margin-left: 6px;">100%</span>`;
 			} else if (rec.started) {
 				status.innerHTML = `<span class="pt-mono" title="${LT.loading()}">${pct}%</span>`;
 			} else {

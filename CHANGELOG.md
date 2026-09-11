@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2026-09-10
+### Fixed
+- A player stuck at 100% now shows the percentage next to the orange check again, instead of only the check mark.
+
 ## [2.2.0] - 2026-09-09
 ### Added
 - Asset load time report: added button on GM preload scene to show load times for each user (selectable from dropdown) of each asset sorted and color coded by load time to identify assets causing issues. 
