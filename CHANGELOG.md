@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-09-09
+### Added
+- Asset load time report: added button on GM preload scene to show load times for each user (selectable from dropdown) of each asset sorted and color coded by load time to identify assets causing issues. 
+- Scene audio is now folded into the scene preload log. During a scene preload, the scene's playlist sounds are timed as assets in the same log (with a music icon) instead of opening the separate audio window, so an audio file that is slowing the preload shows up alongside the textures. The dedicated audio window now appears only when preloading audio directly from a playlist (no scene preload running).
+### Fixed
+- On scenes with playlist a large audio playlist sound configured to auto play, it could cause one or more players to hang on 100% for a very long time. Several things were implemented to resolve this:
+  - Activate button now enables when every connected user reaches 100%, even if a client's "done" message never arrives. A user stuck at 100% is shown with an orange check instead of holding the Activate button disabled indefinitely.
+  - "Skip Scene Audio on Preload" setting (default off). When enabled, a scene's playlist audio is not preloaded during a scene preload; it still loads when the playlist plays. Use it when large loop tracks stall the preload.
+- For scenes with a playlist audio set, scene audio no longer opens in a seperate tracker window (if audio preloading is not disabled).  
+
 ## [2.1.2] - 2026-06-12
 ### Changed
 - Updated Polish localization. Credit [Lioheart](https://github.com/Lioheart)!

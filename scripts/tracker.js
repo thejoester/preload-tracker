@@ -10,6 +10,87 @@ let PT_AUDIO_CURRENT_RUN = { active: false, runId: null, src: null, label: null 
 let PT_AUDIO_LAST_START = { src: null, ts: 0 };
 const PT_AUDIO_TRACKED_SRCS = new Map(); // src => { runId, label }
 
+// Per-asset load timings for the current run on THIS client; emitted to the GM when the run ends
+let PT_ASSET_TIMINGS = []; // [{ src, durationMs, ok }]
+
+// Per-run log (GM side): run-level timing + each user's per-asset load times, for troubleshooting slow preloads
+let PT_RUN_LOG = null; // { sceneId, sceneName, startedAt, users: Map<userId, { name, startedMs, doneMs, assets: [] }> }
+
+// Begin a fresh log for a scene preload run
+function _ptRunLogStart(sceneId, sceneName) {
+	PT_RUN_LOG = { sceneId, sceneName, startedAt: Date.now(), users: new Map() };
+}
+
+// Get (or create) the log record for a user
+function _ptRunLogUser(userId) {
+	if (!PT_RUN_LOG) return null;
+	let u = PT_RUN_LOG.users.get(userId);
+	if (!u) {
+		u = { name: game.users.get(userId)?.name ?? userId, startedMs: null, doneMs: null, assets: [] };
+		PT_RUN_LOG.users.set(userId, u);
+	}
+	return u;
+}
+
+// Mark a user started/done relative to run start
+function _ptRunLogMark(userId, event) {
+	const u = _ptRunLogUser(userId);
+	if (!u) return;
+	const ms = Date.now() - PT_RUN_LOG.startedAt;
+	if (event === "started" && u.startedMs === null) u.startedMs = ms;
+	if (event === "done") u.doneMs = ms;
+}
+
+// Store a user's per-asset timings (from that client)
+function _ptRunLogAssets(userId, assets) {
+	const u = _ptRunLogUser(userId);
+	if (!u || !Array.isArray(assets)) return;
+	u.assets = assets;
+}
+
+// Time one asset load (texture or audio) and record it on the current run's list
+async function _ptRecordAssetLoad(src, audio, invoke) {
+	const t0 = performance.now();
+	let ok = true;
+	try {
+		return await invoke();
+	} catch (e) {
+		ok = false;
+		throw e;
+	} finally {
+		try {
+			if (typeof src === "string" && PT_ASSET_TIMINGS.length < 1000) {
+				PT_ASSET_TIMINGS.push({ src, durationMs: Math.round(performance.now() - t0), ok, audio: !!audio });
+			}
+		} catch {}
+	}
+}
+
+// Send this client's per-asset timings to the GM (the GM records its own locally)
+function _ptEmitAssetTimings(sceneId) {
+	try {
+		if (game.user.isGM || !PT_ASSET_TIMINGS.length) return;
+		emitStatus({ type: "preload-assets", sceneId, userId: game.user.id, assets: PT_ASSET_TIMINGS.slice(0, 1000) });
+	} catch (e) {
+		DL(2, "_ptEmitAssetTimings(): failed", e);
+	}
+}
+// Color for an asset load time: green fast, amber slow, red very slow
+function _ptDurColor(ms) {
+	const n = Number(ms) || 0;
+	if (n >= 10000) return "#ef4444"; // >= 10s
+	if (n >= 5000) return "#f59e0b"; // 5s - 10s
+	return "#22c55e"; // < 5s
+}
+
+// Status label for a user record in the run log ("finished" / "stuck" / "never finished")
+function _ptUserStatus(userId, rec) {
+	if (rec.doneMs !== null) return LT.logFinished();
+	const pct = Number(PreloadTrackerApp.getInstance().users.get(userId)?.pct ?? 0);
+	if (pct >= 100) return LT.logStuck();
+	return LT.logNeverFinished();
+}
+
 
 /*	=======================================================================
     Simple debuig logger to style console messages
@@ -372,8 +453,10 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		for (const u of onlineUsers) {
 			const rec = this.users.get(u.id) || { started: false, done: false, pct: 0 };
 
-			// Track all-online-done
-			if (!rec.done) allOnlineDone = false;
+			// Track all-online-done; a client stuck at 100% (done never arrived) still counts,
+			// so the Activate button is not held hostage by a lost "done" message
+			const effectiveDone = rec.done || Number(rec.pct ?? 0) >= 100;
+			if (!effectiveDone) allOnlineDone = false;
 
 			const row = document.createElement("div");
 			row.style.padding = "6px 8px";
@@ -399,6 +482,9 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 
 				if (rec.done) {
 					status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i>`;
+				} else if (Number(rec.pct ?? 0) >= 100) {
+					// hit 100% but never reported "done" - treat as finished but flag it
+					status.innerHTML = `<i class="fas fa-check pt-orange" title="${LT.finalizing()}"></i>`;
 				} else if (rec.started) {
 					const pct = Math.max(0, Math.min(100, Number(rec.pct ?? 0)));
 					status.innerHTML = `
@@ -478,6 +564,9 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 				const dur = rankByUserId.get(u.id)?.durationMs ?? 0;
 				const secs = (dur / 1000).toFixed(1);
 				status.innerHTML = `<i class="fas fa-check pt-green" title="${LT.finished()}"></i><span class="pt-mono" style="margin-left: 6px;">${secs}s</span>`;
+			} else if (pct >= 100) {
+				// hit 100% but never reported "done" - treat as finished but flag it
+				status.innerHTML = `<i class="fas fa-check pt-orange" title="${LT.finalizing()}"></i>`;
 			} else if (rec.started) {
 				status.innerHTML = `<span class="pt-mono" title="${LT.loading()}">${pct}%</span>`;
 			} else {
@@ -617,6 +706,24 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 			actions.appendChild(chatBtn);
 		}
 
+		// Asset Load Times button (GM only), opens the per-asset log window
+		if (game.user.isGM) {
+			const logBtn = document.createElement("button");
+			logBtn.classList.add("button");
+			logBtn.type = "button";
+			logBtn.textContent = LT.viewLog();
+			logBtn.title = LT.viewLogHint();
+			logBtn.disabled = !PT_RUN_LOG?.users?.size;
+			logBtn.addEventListener("click", () => {
+				try {
+					PreloadLogApp.getInstance().render(true);
+				} catch (e) {
+					DL(3, "viewLog(): failed", e);
+				}
+			});
+			actions.appendChild(logBtn);
+		}
+
 		// Activate button (GM only), disabled until everyone online is done
 		if (game.user.isGM && this.sceneId) {
 			const activateBtn = document.createElement("button");
@@ -668,6 +775,229 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 		actions.appendChild(closeBtn);
 
 		wrapper.appendChild(actions);
+		return wrapper;
+	}
+}
+
+/* =====================================================================================
+	PRELOAD ASSET LOG UI
+	GM window: pick a user, see their assets sorted slowest to fastest
+===================================================================================== */
+class PreloadLogApp extends foundry.applications.api.ApplicationV2 {
+	static _instance = null;
+
+	static getInstance() {
+		if (!this._instance) this._instance = new PreloadLogApp();
+		return this._instance;
+	}
+
+	constructor() {
+		super({
+			id: "preload-log",
+			position: { width: 960, height: 620 },
+			window: { title: LT.logTitle(), icon: "fas fa-stopwatch", resizable: true, modal: false }
+		});
+		this.selectedUserId = null;
+	}
+
+	// Default selection: a stuck user if there is one, else the first user
+	_defaultUserId() {
+		if (!PT_RUN_LOG?.users?.size) return null;
+		for (const [uid, rec] of PT_RUN_LOG.users) {
+			if (rec.doneMs === null && Number(PreloadTrackerApp.getInstance().users.get(uid)?.pct ?? 0) >= 100) return uid;
+		}
+		return PT_RUN_LOG.users.keys().next().value;
+	}
+
+	async _renderHTML(options) {
+		const root = document.createElement("div");
+		// Fill the content area so the inner list can flex and scroll
+		root.style.display = "flex";
+		root.style.flexDirection = "column";
+		root.style.flex = "1";
+		root.style.minHeight = "0";
+		root.appendChild(this._buildInner());
+		return root;
+	}
+
+	async _replaceHTML(result, content, options) {
+		if (content instanceof HTMLElement) {
+			// Make the window-content a flex column with a real height for the scroll chain
+			content.style.display = "flex";
+			content.style.flexDirection = "column";
+			content.style.minHeight = "0";
+			content.replaceChildren(result);
+			return content;
+		}
+		return result;
+	}
+
+	_buildInner() {
+		const secs = (ms) => `${(Math.max(0, Number(ms) || 0) / 1000).toFixed(2)}s`;
+
+		const wrapper = document.createElement("div");
+		wrapper.style.padding = "0.5rem";
+		wrapper.style.display = "flex";
+		wrapper.style.flexDirection = "column";
+		wrapper.style.gap = "8px";
+		wrapper.style.flex = "1";
+		wrapper.style.minHeight = "0";
+
+		if (!PT_RUN_LOG?.users?.size) {
+			const none = document.createElement("div");
+			none.classList.add("pt-mono");
+			none.textContent = LT.logNoRun();
+			wrapper.appendChild(none);
+			return wrapper;
+		}
+
+		// Scene heading
+		const title = document.createElement("div");
+		title.style.fontWeight = "600";
+		title.textContent = PT_RUN_LOG.sceneName || LT.title();
+		wrapper.appendChild(title);
+
+		// Resolve current selection
+		if (!this.selectedUserId || !PT_RUN_LOG.users.has(this.selectedUserId)) {
+			this.selectedUserId = this._defaultUserId();
+		}
+
+		// User picker
+		const pickRow = document.createElement("div");
+		pickRow.style.display = "flex";
+		pickRow.style.alignItems = "center";
+		pickRow.style.gap = "8px";
+
+		const label = document.createElement("label");
+		label.textContent = LT.logSelectUser();
+		label.style.whiteSpace = "nowrap";
+
+		const select = document.createElement("select");
+		select.style.flex = "1";
+		for (const [uid, rec] of PT_RUN_LOG.users) {
+			const opt = document.createElement("option");
+			opt.value = uid;
+			opt.textContent = `${rec.name} — ${rec.assets.length} ${LT.logAssets()} — ${_ptUserStatus(uid, rec)}`;
+			if (uid === this.selectedUserId) opt.selected = true;
+			select.appendChild(opt);
+		}
+		select.addEventListener("change", () => {
+			this.selectedUserId = select.value;
+			this.render(false);
+		});
+
+		pickRow.appendChild(label);
+		pickRow.appendChild(select);
+		wrapper.appendChild(pickRow);
+
+		const rec = PT_RUN_LOG.users.get(this.selectedUserId);
+
+		// Selected-user summary
+		const totalMs = rec.assets.reduce((s, a) => s + (Number(a.durationMs) || 0), 0);
+		const summary = document.createElement("div");
+		summary.classList.add("pt-mono");
+		summary.textContent = `${rec.assets.length} ${LT.logAssets()}, ${secs(totalMs)} ${LT.logTotalLoad()} — ${_ptUserStatus(this.selectedUserId, rec)}`;
+		wrapper.appendChild(summary);
+
+		// Color legend for load times
+		const legend = document.createElement("div");
+		legend.style.display = "flex";
+		legend.style.gap = "14px";
+		legend.style.fontSize = "0.85em";
+		legend.style.opacity = "0.85";
+		for (const [color, text] of [["#22c55e", "< 5s"], ["#f59e0b", "5 - 10s"], ["#ef4444", "≥ 10s"]]) {
+			const item = document.createElement("span");
+			item.style.display = "inline-flex";
+			item.style.alignItems = "center";
+			item.style.gap = "5px";
+			const dot = document.createElement("span");
+			dot.style.width = "10px";
+			dot.style.height = "10px";
+			dot.style.borderRadius = "50%";
+			dot.style.background = color;
+			item.appendChild(dot);
+			item.append(text);
+			legend.appendChild(item);
+		}
+		wrapper.appendChild(legend);
+
+		// Asset list, slowest to fastest
+		const listWrap = document.createElement("div");
+		listWrap.style.flex = "1";
+		listWrap.style.minHeight = "0";
+		listWrap.style.overflowY = "auto";
+		listWrap.style.border = "1px solid #00000020";
+		listWrap.style.borderRadius = "6px";
+
+		if (!rec.assets.length) {
+			const none = document.createElement("div");
+			none.classList.add("pt-mono");
+			none.style.padding = "8px";
+			none.textContent = LT.logNoAssets();
+			listWrap.appendChild(none);
+		} else {
+			const sorted = [...rec.assets].sort((a, b) => (Number(b.durationMs) || 0) - (Number(a.durationMs) || 0));
+			for (const [i, a] of sorted.entries()) {
+				const row = document.createElement("div");
+				row.style.display = "grid";
+				row.style.gridTemplateColumns = "5rem 1fr";
+				row.style.gap = "8px";
+				row.style.alignItems = "center";
+				row.style.padding = "4px 8px";
+				if (i % 2) row.style.background = "#0000000a";
+
+				const dur = document.createElement("div");
+				dur.style.textAlign = "right";
+				dur.style.fontVariantNumeric = "tabular-nums";
+				dur.style.fontWeight = "600";
+				dur.style.color = _ptDurColor(a.durationMs);
+				dur.textContent = secs(a.durationMs);
+
+				const src = document.createElement("div");
+				src.style.overflow = "hidden";
+				src.style.textOverflow = "ellipsis";
+				src.style.whiteSpace = "nowrap";
+				src.style.display = "flex";
+				src.style.alignItems = "center";
+				src.style.gap = "6px";
+				src.title = a.src;
+
+				// Type icon: audio vs image
+				const icon = document.createElement("i");
+				icon.className = a.audio ? "fas fa-music" : "fas fa-image";
+				icon.style.opacity = "0.55";
+				icon.style.flex = "0 0 auto";
+				src.appendChild(icon);
+
+				const path = document.createElement("span");
+				path.style.overflow = "hidden";
+				path.style.textOverflow = "ellipsis";
+				path.style.whiteSpace = "nowrap";
+				path.textContent = a.ok === false ? `${a.src}  [${LT.logFailed()}]` : a.src;
+				if (a.ok === false) path.style.color = "#ef4444";
+				src.appendChild(path);
+
+				row.appendChild(dur);
+				row.appendChild(src);
+				listWrap.appendChild(row);
+			}
+		}
+		wrapper.appendChild(listWrap);
+
+		// Footer
+		const footer = document.createElement("div");
+		footer.style.display = "flex";
+		footer.style.justifyContent = "flex-end";
+		footer.style.gap = "8px";
+
+		const closeBtn = document.createElement("button");
+		closeBtn.classList.add("button");
+		closeBtn.type = "button";
+		closeBtn.textContent = LT.close();
+		closeBtn.addEventListener("click", () => this.close());
+		footer.appendChild(closeBtn);
+
+		wrapper.appendChild(footer);
 		return wrapper;
 	}
 }
@@ -1094,14 +1424,23 @@ function registerSocketHandlers() {
 
 				if (!app.rendered) await app.render(true);
 
-				if (data.status === "started") app.markStarted(data.userId);
-				if (data.status === "done") app.markDone(data.userId);
+				if (data.status === "started") { app.markStarted(data.userId); _ptRunLogMark(data.userId, "started"); }
+				if (data.status === "done") { app.markDone(data.userId); _ptRunLogMark(data.userId, "done"); }
 				if (data.status === "progress" && typeof data.pct === "number") {
 					app.setProgress(data.userId, data.pct);
 				}
 
 				await app.render(false);
 				app._broadcastState();
+				return;
+			}
+
+			// ============================
+			// SCENE ASSET TIMINGS: clients -> GM
+			// ============================
+			if (data.type === "preload-assets") {
+				if (!game.user.isGM) return;
+				_ptRunLogAssets(data.userId, data.assets);
 				return;
 			}
 
@@ -1181,6 +1520,7 @@ function installPreloadWrappers_libWrapper() {
 				DL(`lw[Scene#preload]: started for "${this.name}" (${this.id})`);
 				PT_CURRENT_RUN.active = true;
 				PT_CURRENT_RUN.sceneId = this.id;
+				PT_ASSET_TIMINGS = [];
 
 				_ptInstallConsoleProgressTap();
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "started" });
@@ -1189,6 +1529,8 @@ function installPreloadWrappers_libWrapper() {
 					const app = PreloadTrackerApp.getInstance();
 					app.ensureUsersFromGame();
 					app.startRun(this);
+					_ptRunLogStart(this.id, this.name);
+					_ptRunLogMark(game.user.id, "started");
 					if (!app.rendered) await app.render(true);
 					app.markStarted(game.user.id);
 					await app.render(false);
@@ -1199,9 +1541,12 @@ function installPreloadWrappers_libWrapper() {
 
 				DL(`lw[Scene#preload]: done for "${this.name}" (${this.id})`);
 				emitStatus({ type: "preload-status", sceneId: this.id, userId: game.user.id, status: "done" });
+				_ptEmitAssetTimings(this.id);
 
 				if (game.user.isGM) {
 					const app = PreloadTrackerApp.getInstance();
+					_ptRunLogMark(game.user.id, "done");
+					_ptRunLogAssets(game.user.id, PT_ASSET_TIMINGS);
 					app.markDone(game.user.id);
 					await app.render(false);
 					app._broadcastState();
@@ -1230,6 +1575,7 @@ function installPreloadWrappers_libWrapper() {
 				DL(`lw[game.scenes.preload]: started for "${name}" (${sceneId})`);
 				PT_CURRENT_RUN.active = true;
 				PT_CURRENT_RUN.sceneId = sceneId;
+				PT_ASSET_TIMINGS = [];
 
 				_ptInstallConsoleProgressTap();
 				emitStatus({ type: "preload-status", sceneId, userId: game.user.id, status: "started" });
@@ -1238,6 +1584,8 @@ function installPreloadWrappers_libWrapper() {
 					const app = PreloadTrackerApp.getInstance();
 					app.ensureUsersFromGame();
 					app.startRun(sc);
+					_ptRunLogStart(sceneId, name);
+					_ptRunLogMark(game.user.id, "started");
 					if (!app.rendered) await app.render(true);
 					app.markStarted(game.user.id);
 					await app.render(false);
@@ -1248,9 +1596,12 @@ function installPreloadWrappers_libWrapper() {
 
 				DL(`lw[game.scenes.preload]: done for "${name}" (${sceneId})`);
 				emitStatus({ type: "preload-status", sceneId, userId: game.user.id, status: "done" });
+				_ptEmitAssetTimings(sceneId);
 
 				if (game.user.isGM) {
 					const app = PreloadTrackerApp.getInstance();
+					_ptRunLogMark(game.user.id, "done");
+					_ptRunLogAssets(game.user.id, PT_ASSET_TIMINGS);
 					app.markDone(game.user.id);
 					await app.render(false);
 					app._broadcastState();
@@ -1264,6 +1615,23 @@ function installPreloadWrappers_libWrapper() {
 				DL(3, "lw[game.scenes.preload]: error", e);
 				throw e;
 			}
+		}, "WRAPPER");
+		registered++;
+	}
+
+	// Wrap TextureLoader#loadTexture to time each asset loaded during a preload run.
+	// Runs on every client; results are batched and sent to the GM when the run ends.
+	const TL = foundry.canvas?.TextureLoader ?? globalThis.TextureLoader;
+	const hasLoadTexture = typeof TL?.prototype?.loadTexture === "function";
+	const loadTexturePath = foundry.canvas?.TextureLoader
+		? "foundry.canvas.TextureLoader.prototype.loadTexture"
+		: "TextureLoader.prototype.loadTexture";
+	DL(`libWrapper probes: ${loadTexturePath} => ${hasLoadTexture ? "function" : "missing"}`);
+
+	if (hasLoadTexture) {
+		register(loadTexturePath, async function (wrapped, src, ...rest) {
+			if (!PT_CURRENT_RUN.active) return wrapped(src, ...rest);
+			return _ptRecordAssetLoad(src, false, () => wrapped(src, ...rest));
 		}, "WRAPPER");
 		registered++;
 	}
@@ -1361,6 +1729,19 @@ function installAudioPreloadWrappers_libWrapper() {
 				try {
 					// Always allow the underlying preload to happen
 					if (!src) return await wrapped(src, ...args);
+
+					// During a scene preload, fold audio into the scene's asset log instead of
+					// opening the separate audio window; the audio window is only for standalone
+					// playlist preloads (when no scene preload is running).
+					if (PT_CURRENT_RUN.active) {
+						// Optionally skip scene playlist audio entirely; loops still load when the
+						// playlist plays, so preloading large tracks just stalls the scene preload.
+						if (game.settings.get(MOD_ID, "skipAudioOnPreload")) {
+							DL(`lw[AudioHelper.preloadSound]: skipping scene audio on preload (setting) src=${src}`);
+							return null;
+						}
+						return _ptRecordAssetLoad(src, true, () => wrapped(src, ...args));
+					}
 
 					// Debounce repeated calls on startup or spam-clicking
 					const now = Date.now();
@@ -1485,6 +1866,17 @@ Hooks.once("init", () => {
 		requiresReload: false
 	});
 
+	// Skip scene playlist audio during preload (loops load lazily on play instead)
+	game.settings.register(MOD_ID, "skipAudioOnPreload", {
+		name: game.i18n.localize("preload-tracker.settings.skipAudioOnPreloadName"),
+		hint: game.i18n.localize("preload-tracker.settings.skipAudioOnPreloadHint"),
+		scope: "world",
+		config: true,
+		type: Boolean,
+		default: false,
+		requiresReload: false
+	});
+
 	// Register Race Mode toggle
 	game.settings.register(MOD_ID, "enableRaceMode", {
 		name: game.i18n.localize("preload-tracker.settings.enableRaceModeName"),
@@ -1534,7 +1926,7 @@ Hooks.once("init", () => {
 	SCENE SIDEBAR CONTEXT MENU
 ===================================================================================== */
 Hooks.on("getSceneContextOptions", (app, contextOptions) => {
-	// Only add to the sidebar, not the scene navigation bar at the top
+	// Add "Preload Scene" to the sidebar scene right-click menu
 	if (app?.constructor?.name === "SceneNavigation") return;
 	contextOptions.push({
 		name: LT.preloadScene(),
