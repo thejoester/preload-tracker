@@ -1619,19 +1619,36 @@ function installPreloadWrappers_libWrapper() {
 		registered++;
 	}
 
-	// Wrap TextureLoader#loadTexture to time each asset loaded during a preload run.
-	// Runs on every client; results are batched and sent to the GM when the run ends.
+	// Wrap TextureLoader#load, the batch funnel every scene texture passes through in v12-v14
+	// (Scenes#preload -> TextureLoader.loadSceneTextures -> loader.load). Wrapping the per-file
+	// loadTexture missed scene textures on v14, so time each source here instead. Runs on every
+	// client; results are batched and sent to the GM when the run ends.
 	const TL = foundry.canvas?.TextureLoader ?? globalThis.TextureLoader;
-	const hasLoadTexture = typeof TL?.prototype?.loadTexture === "function";
-	const loadTexturePath = foundry.canvas?.TextureLoader
-		? "foundry.canvas.TextureLoader.prototype.loadTexture"
-		: "TextureLoader.prototype.loadTexture";
-	DL(`libWrapper probes: ${loadTexturePath} => ${hasLoadTexture ? "function" : "missing"}`);
+	const hasLoad = typeof TL?.prototype?.load === "function";
+	const loadPath = foundry.canvas?.TextureLoader
+		? "foundry.canvas.TextureLoader.prototype.load"
+		: "TextureLoader.prototype.load";
+	DL(`libWrapper probes: ${loadPath} => ${hasLoad ? "function" : "missing"}`);
 
-	if (hasLoadTexture) {
-		register(loadTexturePath, async function (wrapped, src, ...rest) {
-			if (!PT_CURRENT_RUN.active) return wrapped(src, ...rest);
-			return _ptRecordAssetLoad(src, false, () => wrapped(src, ...rest));
+	if (hasLoad) {
+		register(loadPath, async function (wrapped, sources, options = {}) {
+			// Only instrument during a tracked preload run; otherwise pass through untouched
+			if (!PT_CURRENT_RUN.active || !Array.isArray(sources)) return wrapped(sources, options);
+
+			const loader = this;
+			const toLoad = [];
+			for (const s of sources) {
+				if (!s || (typeof s === "string" && s.startsWith("#"))) continue;
+				toLoad.push(s);
+			}
+
+			// Time each source. loadTexture caches in PIXI, so core's own pass below resolves from
+			// cache (no real double-load) while still running its progress bar and cache handling.
+			await Promise.allSettled(toLoad.map(src =>
+				_ptRecordAssetLoad(src, false, () => loader.loadTexture(src)).catch(() => {})
+			));
+
+			return wrapped(sources, options);
 		}, "WRAPPER");
 		registered++;
 	}

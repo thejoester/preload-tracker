@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2026-09-19
+### Fixed
+- corrected asset load time report to show all assets in v14.
+
 ## [2.2.1] - 2026-09-10
 ### Fixed
 - A player stuck at 100% now shows the percentage next to the orange check again, instead of only the check mark.
