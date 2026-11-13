@@ -1,4 +1,4 @@
-# Preload Manager
+# Preload Tracker
 
 FoundryVTT Module to help Game Master track status of preloading scenes and playlist audio for connected users.
 
