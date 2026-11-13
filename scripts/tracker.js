@@ -347,10 +347,12 @@ class PreloadTrackerApp extends foundry.applications.api.ApplicationV2 {
 	_broadcastState() {
 		if (!game.settings.get(MOD_ID, "showToPlayers")) return;
 		try {
+			// Players only see the scene's nav name; if it has none, send no name at all
+			const navName = game.scenes.get(this.sceneId)?.navName?.trim() || "";
 			const payload = {
 				type: "preload-state",
 				sceneId: this.sceneId,
-				sceneName: this.sceneName,
+				sceneName: navName,
 				users: Array.from(this.users.entries()).map(([userId, rec]) => ({ userId, ...rec }))
 			};
 			game.socket.emit(`module.${MOD_ID}`, payload);

@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.3] - 2026-11-13
+### Changed
+- When the tracker is shown to players, the window now uses the scene's navigation name instead of its full name, so players don't see a scene title you meant to keep hidden. If a scene has no navigation name, the player window shows a generic "Preloading scene..." with no name at all.
+
 ## [2.2.2] - 2026-09-19
 ### Fixed
 - corrected asset load time report to show all assets in v14.
